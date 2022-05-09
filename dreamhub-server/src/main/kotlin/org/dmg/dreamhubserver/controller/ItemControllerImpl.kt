@@ -72,6 +72,6 @@ class ItemControllerImpl(
     valueIndex: Int,
     newValue: ValueDto
   ) {
-    TODO("Not yet implemented")
+    service.modifyAttributeValue(id, nestedId, attributeName, valueIndex, newValue)
   }
 }
