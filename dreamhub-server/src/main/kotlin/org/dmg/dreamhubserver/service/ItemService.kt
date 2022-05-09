@@ -261,7 +261,34 @@ class ItemService(
       .firstOrNull()
 
   fun removeAttributeValue(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {
+    itemRepository
+      .findById(id)
+      .get()
+      .modify(nestedId) {
+        it
+          .attributes
+          .find { it.name == attributeName }
+          ?.values?.removeAt(valueIndex)
+      }
+  }
 
+  fun modifyAttributeValue(
+    id: Long,
+    nestedId: Long,
+    attributeName: String,
+    valueIndex: Int,
+    newValue: ValueDto
+  ) {
+    itemRepository
+      .findById(id)
+      .get()
+      .modify(nestedId) {
+        it
+          .attributes
+          .find { it.name == attributeName }
+          ?.values
+          ?.set(valueIndex, newValue)
+      }
   }
 }
 

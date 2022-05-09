@@ -62,7 +62,7 @@ class ItemControllerImpl(
   }
 
   override fun removeAttributeValue(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {
-    TODO("Not yet implemented")
+    service.removeAttributeValue(id, nestedId, attributeName, valueIndex)
   }
 
   override fun modifyAttributeValue(
