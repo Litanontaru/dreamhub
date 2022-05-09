@@ -1,0 +1,21 @@
+package org.dmg.dreamhubserver.model
+
+import org.hibernate.annotations.Type
+import javax.persistence.Entity
+
+@Entity
+class Item: DBObject() {
+  var name: String = ""
+
+  var path: String = ""
+
+  var settingId: Long = 0
+
+  @Type(type = "text")
+  var extends: String = ""
+
+  var isType: Boolean = false
+
+  @Type(type = "text")
+  var definition: String = ""
+}
