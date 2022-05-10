@@ -1,6 +1,8 @@
 server:
   port: 5000
 
+backend-url: backend-url
+
 spring:
   datasource:
     url: "jdbc:mysql://dev-monsterhub-db.cvdxwooziepy.eu-west-3.rds.amazonaws.com:3306/dreamhub?useLegacyDatetimeCode=false&amp&serverTimezone=UTC&characterEncoding=UTF8"

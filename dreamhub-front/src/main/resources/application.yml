@@ -1,0 +1,12 @@
+server:
+  port: 5000
+
+backend-url: backend-url
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
