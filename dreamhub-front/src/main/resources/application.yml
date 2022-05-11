@@ -1,7 +1,7 @@
 server:
   port: 5000
 
-backend-url: backend-url
+backend-url: https://api.dreamhub.link
 
 feign:
   client:
