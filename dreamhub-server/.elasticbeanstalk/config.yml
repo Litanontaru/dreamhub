@@ -1,0 +1,21 @@
+branch-defaults:
+  main:
+    environment: Dreamhubserver-env
+deploy:
+  artifact: target/dreamhub-server-0.0.1-SNAPSHOT.jar
+environment-defaults:
+  Dreamhubserver-env:
+    branch: null
+    repository: null
+global:
+  application_name: dreamhub-server
+  default_ec2_keyname: null
+  default_platform: Corretto 11 running on 64bit Amazon Linux 2
+  default_region: eu-west-3
+  include_git_submodules: true
+  instance_profile: null
+  platform_name: null
+  platform_version: null
+  profile: dmg
+  sc: git
+  workspace_type: Application
