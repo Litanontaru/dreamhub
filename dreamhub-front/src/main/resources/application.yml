@@ -1,7 +1,9 @@
 server:
   port: 5000
 
-backend-url: https://api.dreamhub.link
+backend-url: "https://api.dreamhub.link"
+
+feign.httpclient.enabled: true
 
 feign:
   client:
@@ -9,4 +11,4 @@ feign:
       default:
         connectTimeout: 5000
         readTimeout: 5000
-        loggerLevel: basic
+        loggerLevel: BASIC

@@ -1,4 +1,4 @@
-package org.dmg.api
+package org.dmg.dreamhubfront
 
 open class ItemName {
   var id: Long = 0
