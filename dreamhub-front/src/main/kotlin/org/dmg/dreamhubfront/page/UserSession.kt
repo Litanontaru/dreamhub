@@ -9,7 +9,6 @@ import org.springframework.web.context.annotation.SessionScope
 
 import java.io.Serializable
 
-
 @Component
 @SessionScope
 class UserSession : Serializable {
