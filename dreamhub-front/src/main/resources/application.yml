@@ -12,3 +12,12 @@ feign:
         connectTimeout: 5000
         readTimeout: 5000
         loggerLevel: BASIC
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 747552759595-acdsv33rtnp61a4lihl9jsse8hsm5pt8.apps.googleusercontent.com
+            client-secret: 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
