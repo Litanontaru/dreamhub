@@ -5,6 +5,8 @@ import javax.persistence.Entity
 
 @Entity
 class Item: DBObject() {
+  var origin: Long = 0
+
   var name: String = ""
 
   var path: String = ""
