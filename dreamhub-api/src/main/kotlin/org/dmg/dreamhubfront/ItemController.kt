@@ -25,7 +25,7 @@ interface ItemController {
   //--------------------------------------------------------------------------------------------------------------------
 
   @GetMapping("/items/{id}")
-  fun get(id: Long): ItemDto
+  fun get(@PathVariable id: Long): ItemDto
 
   @PostMapping("/items")
   fun add(@RequestBody newItem: ItemDto): ItemDto
