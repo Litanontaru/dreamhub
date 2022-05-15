@@ -23,51 +23,9 @@ class ItemService(
 
   fun getAll(settingId: Long, findUsages: Long): List<ItemListDto> = TODO("Not yet implemented")
 
-  fun getAllRecursiveSetting(settingId: Long, superTypeId: Long): List<ItemListDto> =
-    settingService
-      .getDependencies(settingId)
-      .let { itemIndexRepository.findAllByRefAndSettingIdIn(superTypeId, it) }
-      .asSequence()
-      .flatMap { it.ids.split(",") }
-      .map { it.toLong() }
-      .toList()
-      .let { itemRepository.getAll(it) }
-      .map { it.toDto() }
+  fun getAllRecursiveSetting(settingId: Long, superTypeId: Long): List<ItemListDto> = TODO("Not yet implemented")
 
-  fun getAllTypes(settingId: Long): List<TypeDto> {
-    val types = settingService
-      .getDependencies(settingId)
-      .let { itemRepository.getAllTypesWithExtends(it) }
-      .map { it to it.getExtends().split(",").map { it.toLong() } }
-      .associateBy { it.first.getId() }
-
-    fun process(map: Map<Long, List<Long>>, id: Long): Map<Long, List<Long>> =
-      map[id]!!
-        .filter { !map.containsKey(it) }
-        .let { itemRepository.getAllTypesWithExtendsByIds(it) }
-        .associate { it.getId() to it.getExtends().split(",").map { it.toLong() } }
-        .let { it.map { it.key }.fold(map + it, ::process) }
-
-    val all = types.map { it.key }.fold(types.mapValues { it.value.second }, ::process)
-
-    val subTypes = types.mapValues {
-      generateSequence(it.value.second) { it.filter { !types.containsKey(it) }.flatMap { all[it]!! } }
-        .takeWhile { it.isNotEmpty() }
-        .flatMap { it }
-        .distinct()
-        .toList()
-    }
-
-    return types.map {
-      TypeDto().apply {
-        id = it.value.first.getId()
-        name = it.value.first.getName()
-        path = it.value.first.getPath()
-        this.settingId = it.value.first.getSettingId()
-        subtypeIds = subTypes[it.key]!!
-      }
-    }
-  }
+  fun getAllTypes(settingId: Long): List<TypeDto> = settingService.getAllDependencyTypes(settingId)
 
   fun get(id: Long): ItemDto = itemRepository.getDefinitionById(id).toDto().prepare(id)
 
