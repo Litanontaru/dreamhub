@@ -4,6 +4,7 @@ import javax.persistence.Entity
 
 @Entity
 class UserRole: DBObject() {
-  val setting: Long = 0
-  val userId: Long = 0
+  var settingId: Long = 0
+  var userId: Long = 0
+  var role: UserRoleType = UserRoleType.GUEST
 }

@@ -9,10 +9,10 @@ interface SettingController {
   fun getAllSettings() : List<SettingListDto>
 
   @GetMapping("/settings/{settingId}")
-  fun getSettingById(@PathVariable settingId: Long): SettingDto
+  fun getSettingById(@PathVariable settingId: Long): SettingDto?
 
   @PostMapping("/settings")
-  fun addSetting(@RequestBody setting: SettingDto): SettingDto
+  fun addSetting(@RequestBody setting: SettingDto)
 
   @DeleteMapping("/settings/{settingId}")
   fun removeSetting(@PathVariable settingId: Long)

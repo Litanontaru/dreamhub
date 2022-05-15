@@ -9,5 +9,5 @@ class SettingDto {
   var id: Long = 0
   var name: String = ""
   var description: String = ""
-  var dependencies: MutableList<Long> = mutableListOf()
+  var dependencies: MutableList<SettingListDto> = mutableListOf()
 }
