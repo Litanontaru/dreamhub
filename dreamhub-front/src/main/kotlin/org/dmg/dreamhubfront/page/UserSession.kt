@@ -1,6 +1,5 @@
 package org.dmg.dreamhubfront.page
 
-import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal
@@ -26,7 +25,6 @@ class UserSession : Serializable {
 
   val isLoggedIn: Boolean
     get() {
-      val authentication: Authentication? = SecurityContextHolder.getContext().authentication
-      return authentication != null
+      return SecurityContextHolder.getContext().authentication != null
     }
 }
