@@ -1,7 +1,9 @@
 package org.dmg.dreamhubserver.model
 
 import org.hibernate.annotations.Type
+import javax.persistence.Entity
 
+@Entity
 class Setting: DBObject() {
   var origin: Long = 0
 
