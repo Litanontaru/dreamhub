@@ -50,7 +50,11 @@ class SettingService(
           id = it.id
           name = it.name
           description = it.description
-          dependencies = it.dependencies.split(",").mapNotNull { it.toLongOrNull() }.let { settingRepository.getAll(it) }.map { it.toDto() }.toMutableList()
+          dependencies = it.dependencies
+            .split(",")
+            .mapNotNull { it.toLongOrNull() }
+            .let { settingRepository.getAll(it) }
+            .map { it.toDto() }.toMutableList()
         }
       }
 
@@ -62,10 +66,10 @@ class SettingService(
       settingRepository.save(it)
       it.id
     }
-    userRepository.findByEmail(userEmail) ?: User().apply {
+    (userRepository.findByEmail(userEmail) ?: User().apply {
       email = userEmail
       userRepository.save(this)
-    }.let {
+    }).let {
       UserRole().apply {
         userId = it.id
         settingId = newSettingId
