@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 
-@FeignClient(name = "api", url = "\${backend-url}")
+@FeignClient(name = "api.item", url = "\${backend-url}")
 interface ItemController {
   //--------------------------------------------------------------------------------------------------------------------
 

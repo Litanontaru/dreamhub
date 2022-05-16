@@ -3,7 +3,7 @@ package org.dmg.dreamhubfront
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.web.bind.annotation.*
 
-@FeignClient(name = "api", url = "\${backend-url}")
+@FeignClient(name = "api.setting", url = "\${backend-url}")
 interface SettingController {
   @GetMapping("/settings")
   fun getAllSettings() : List<SettingListDto>
