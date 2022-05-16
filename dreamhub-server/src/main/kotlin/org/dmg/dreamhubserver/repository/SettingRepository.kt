@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 
 interface SettingRepository: CrudRepository<Setting, Long> {
-  @Query("SELECT s.id, s.name FROM Setting s where id in :ids")
+  @Query("SELECT s.id as id, s.name as name FROM Setting s where s.id in :ids")
   fun getAll(ids: List<Long>): List<SettingList>
 }
 
