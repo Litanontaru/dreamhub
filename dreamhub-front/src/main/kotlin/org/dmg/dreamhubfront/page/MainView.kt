@@ -2,19 +2,25 @@ package org.dmg.dreamhubfront.page
 
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.button.Button
+import com.vaadin.flow.component.html.Anchor
 import com.vaadin.flow.component.html.Div
 import com.vaadin.flow.component.html.Image
+import com.vaadin.flow.component.html.Label
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.server.VaadinServletRequest
+import org.dmg.dreamhubfront.SettingController
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler
 import javax.annotation.security.PermitAll
 
 
 @Route("")
 @PermitAll
-class MainView(userSession: UserSession) : VerticalLayout() {
+class MainView(
+  userSession: UserSession,
+  settingController: SettingController
+) : VerticalLayout() {
   init {
     val div = Div()
     div.setText("Hello ${userSession.user.firstName} ${userSession.user.lastName}")
@@ -31,6 +37,14 @@ class MainView(userSession: UserSession) : VerticalLayout() {
     }
     alignItems = FlexComponent.Alignment.CENTER
     add(div, image, logoutButton)
+
+    settingController.getAllSettings().map { Anchor("/settings/${it.id}", it.name) }.forEach(::add)
+
+    add(Button("Создать игровой мир") {
+      SettingEditDialog(null) {
+        settingController.addSetting(it)
+      }.open()
+    })
   }
 
   companion object {
