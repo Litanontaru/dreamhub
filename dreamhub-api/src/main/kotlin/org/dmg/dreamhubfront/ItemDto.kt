@@ -58,9 +58,3 @@ class ValueDto {
 
   var itemOwnerId: Long = 0
 }
-
-class ItemListFilterDto(
-  var setting: Long,
-  var filter: String,
-  var findUsages: Long,
-)
