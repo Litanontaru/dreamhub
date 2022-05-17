@@ -101,7 +101,10 @@ class SettingService(
       .mapNotNull { it.toLongOrNull() }
 }
 
-fun String.toListDto(): List<TypeDto> = ObjectMapper().readValue(this, object : TypeReference<List<TypeDto>>() {})
+fun String.toListDto(): List<TypeDto> = when {
+  isBlank() -> listOf()
+  else -> ObjectMapper().readValue(this, object : TypeReference<List<TypeDto>>() {})
+}
 
 fun SettingList.toDto(): SettingListDto {
   return SettingListDto().also {
