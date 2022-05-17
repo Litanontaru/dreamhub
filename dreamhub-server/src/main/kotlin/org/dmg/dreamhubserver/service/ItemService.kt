@@ -36,7 +36,8 @@ class ItemService(
         .flatMap { it.values }
         .mapNotNull { it.nested }
         .flatMap { sequenceOf(it.nestedId, it.maxNestedId()) }
-        .maxOf { it }
+        .maxOfOrNull { it }
+        ?: 0
 
     this.id = id
     this.nextNestedId = maxNestedId() + 1
