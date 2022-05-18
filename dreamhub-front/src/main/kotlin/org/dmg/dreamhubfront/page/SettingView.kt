@@ -18,13 +18,14 @@ import org.dmg.dreamhubfront.ItemListDto
 import org.dmg.dreamhubfront.TypeDto
 import javax.annotation.security.PermitAll
 
-@Route("settings/:settingId")
+@Route("settings/:settingId/:itemId")
 @PermitAll
 class SettingView(
   private val itemController: ItemController,
   private val itemsTreeDataProviderService: ItemsTreeDataProviderService
 ) : VerticalLayout(), BeforeEnterObserver {
   var settingId: Long = -1
+  var itemId: Long = -1
 
   override fun beforeEnter(event: BeforeEnterEvent?) {
     if (event != null) {
@@ -74,15 +75,29 @@ class SettingView(
         else -> null
       }?.also {
         it.subMenu.addItem("Создать...") {
-          itemController.add(ItemDto().also {
-            it.settingId = settingId
-            it.path = item?.fullName ?: ""
-          }).also {
-            dataProvider.add(it.toListDto())
-          }
+          NewItemDialog { name ->
+            itemController.add(ItemDto().also {
+              it.name = name
+              it.settingId = settingId
+              it.path = item?.fullName ?: ""
+            }).also {
+              dataProvider.add(it.toListDto())
+            }
+          }.open()
         }
         types.forEach { type ->
-
+          //todo
+        }
+      }
+      if (item != null) {
+        if (item.isFolder) {
+          it.addItem("Удалить папку") {
+            //todo
+          }
+        } else {
+          it.addItem("Удалить") {
+            itemController.remove(item.item!!.id)
+          }
         }
       }
 

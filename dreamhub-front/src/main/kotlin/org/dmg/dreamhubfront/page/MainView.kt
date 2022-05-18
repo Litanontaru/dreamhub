@@ -38,7 +38,7 @@ class MainView(
     alignItems = FlexComponent.Alignment.CENTER
     add(div, image, logoutButton)
 
-    settingController.getAllSettings().map { Anchor("/settings/${it.id}", it.name) }.forEach(::add)
+    settingController.getAllSettings().map { Anchor("/settings/${it.id}/-1", it.name) }.forEach(::add)
 
     add(Button("Создать игровой мир") {
       SettingEditDialog(null) {
