@@ -2,7 +2,7 @@ package org.dmg.dreamhubserver.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.dmg.dreamhubfront.*
-import org.dmg.dreamhubserver.*
+import org.dmg.dreamhubfront.StandardTypes.TYPE
 import org.dmg.dreamhubserver.model.Item
 import org.dmg.dreamhubserver.repository.ItemIndexRepository
 import org.dmg.dreamhubserver.repository.ItemList
@@ -186,20 +186,16 @@ class ItemService(
           AttributeDto().also {
             it.name = attributeName
             it.attributeOwnerId = metatdata.attributeOwnerId
-            it.typeId = metatdata.values[0].primitive!!.toLong()
-            it.typeName = itemRepository.getNameById(it.typeId)
-            it.isSingle = "[]" == metatdata.values[1].primitive!!
-            it.allowCreate = "+" == metatdata.values[2].primitive!!
+            it.type = metatdata.values[0].toAttributeTypeDto()
             dto.attributes.add(it)
           }
         })
         ?: AttributeDto().also {                                      //Метаданных нет, значит это новое поле - метаданные
           it.name = attributeName
           it.attributeOwnerId = id
-          it.typeId = -1
-          it.typeName = ""
-          it.isSingle = true
-          it.allowCreate = false
+          it.type.id = TYPE.id
+          it.type.isSingle = true
+          it.type.allowCreate = false
           dto.attributes.add(it)
         }
       attribute
@@ -207,18 +203,6 @@ class ItemService(
         .add(newValue)
     }
   }
-
-  private fun AbstractItemDto.getMetadata(attributeName: String): AttributeDto? =
-    extends
-      .asSequence()
-      .mapNotNull { it.item }
-      .mapNotNull {
-        it
-          .attributes
-          .find { it.typeId == -1L && it.name == attributeName }
-          ?: it.getMetadata(attributeName)
-      }
-      .firstOrNull()
 
   fun removeAttributeValue(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {
     itemRepository
