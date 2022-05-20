@@ -22,10 +22,17 @@ import javax.annotation.security.PermitAll
 @PermitAll
 class SettingView(
   private val itemController: ItemController,
-  private val itemsTreeDataProviderService: ItemsTreeDataProviderService
-) : VerticalLayout(), BeforeEnterObserver {
+  private val itemsTreeDataProviderService: ItemsTreeDataProviderService,
+  private val itemTreeDataProviderService: ItemTreeDataProviderService
+) : HorizontalLayout(), BeforeEnterObserver {
   var settingId: Long = -1
   var itemId: Long = -1
+
+  init {
+    width = "100%"
+    height = "100%"
+    isPadding = false
+  }
 
   override fun beforeEnter(event: BeforeEnterEvent?) {
     if (event != null) {
@@ -35,6 +42,7 @@ class SettingView(
 
   private fun set(settingId: Long) {
     if (settingId != this.settingId) {
+      val view = ItemView(itemController, itemTreeDataProviderService)
 
       val types = itemController.getAllTypes(settingId)
       val dataProvider = itemsTreeDataProviderService(settingId)
@@ -59,9 +67,17 @@ class SettingView(
         tree.contextMenu(null, types, dataProvider)
         tree.setDataProvider(dataProvider)
         tree.addThemeVariants(GridVariant.LUMO_COMPACT)
+        tree.addItemClickListener {
+          it.item.item?.let { view.itemId = it.id }
+        }
+
+        tree.width = "100%"
+        tree.height = "100%"
 
         add(tree)
       }
+
+      add(view)
 
       this.settingId = settingId
     }

@@ -16,11 +16,13 @@ class TypeDto : ItemListDto() {
   var subtypeIds: List<Long> = listOf()
 }
 
-open class AbstractItemDto : ItemName() {
+abstract class AbstractItemDto : ItemName() {
   var extends: MutableList<RefDto> = mutableListOf()
   var attributes: MutableList<AttributeDto> = mutableListOf()
   var superFormula: String = ""
   var rate: String = ""
+
+  abstract fun nestedId(): Long
 
   fun getMetadata(attributeName: String): AttributeDto? =
     extends
@@ -39,6 +41,8 @@ open class AbstractItemDto : ItemName() {
       .asSequence()
       .mapNotNull { it.item }
       .flatMap { it.getMetadata() + it.attributes.asSequence().filter { it.type.id == TYPE.id } }
+
+  fun allowedExtensions(): List<ItemName> = (listOf(TYPE) + extends.mapNotNull { it.item }.flatMap { it.allowedExtensions() }).distinct()
 }
 
 class ItemDto : AbstractItemDto() {
@@ -48,10 +52,14 @@ class ItemDto : AbstractItemDto() {
   var allowedExtensions: MutableList<ItemName> = mutableListOf()
   var formula: String = ""
   var isType: Boolean = false
+
+  override fun nestedId(): Long = -1
 }
 
 class NestedItemDto : AbstractItemDto() {
   var nestedId: Long = 0
+
+  override fun nestedId(): Long = nestedId
 }
 
 class RefDto {
@@ -63,6 +71,8 @@ class AttributeTypeDto {
   var id: Long = -1
   var isSingle: Boolean = false
   var allowCreate: Boolean = false
+
+  fun toItemName() = ItemName().also { it.id = id }
 }
 
 class AttributeDto {
