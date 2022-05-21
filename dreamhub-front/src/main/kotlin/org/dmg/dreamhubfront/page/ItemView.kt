@@ -30,8 +30,36 @@ class ItemView(
 
       add(HorizontalLayout().apply {
         TreeGrid<ItemTreeNode>().also { tree ->
-          tree.addHierarchyColumn { it.name() }
-          tree.setDataProvider(itemTreeDataProviderService(item))
+          val dataProvider = itemTreeDataProviderService(item)
+
+          //ADD SELECTION TRACKER
+          var selectedItem: ItemTreeNode? = null
+          fun updateSelection(node: ItemTreeNode?) {
+            if (node == null || selectedItem == null || node != selectedItem) {
+              val oldSelected = selectedItem
+              selectedItem = node
+              if (oldSelected != null) {
+                dataProvider.refreshItem(oldSelected)
+              }
+              if (selectedItem != null) {
+                dataProvider.refreshItem(selectedItem)
+              }
+            }
+          }
+
+          tree.addSelectionListener { updateSelection(it.firstSelectedItem.orElse(null)) }
+
+          tree.addComponentHierarchyColumn { item ->
+            Lines.toComponent(item, item == selectedItem, itemController) { node, refreshChildren ->
+              dataProvider.refreshItem(node, refreshChildren)
+            }
+          }.also {
+            it.width = "100%"
+            it.flexGrow = 1
+            it.isAutoWidth = true
+          }
+
+          tree.setDataProvider(dataProvider)
           add(tree)
           width = "100%"
           height = "100%"

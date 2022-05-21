@@ -19,6 +19,7 @@ abstract class ItemTreeNode(
   open fun remove(node: ItemTreeNode): Unit = throw UnsupportedOperationException()
   open fun replace(value: ItemName): Unit = throw UnsupportedOperationException()
   open fun type(): List<ItemName> = throw UnsupportedOperationException()
+  open fun isSingle(): Boolean = true
   open fun allowNested(): Boolean = false
 
   open fun getAsPrimitive(): Any? = throw UnsupportedOperationException()
@@ -298,22 +299,35 @@ class ItemAttributeNode(
   override fun canCompact() = attributeDto.type.isSingle
 
   override fun add(value: ItemName) {
-    //todo
+    when(value) {
+      is NestedItemDto -> ValueDto().apply { nested = value }
+      else -> ValueDto().apply { terminal = RefDto().apply { id = value.id } }
+    }.let {
+      itemController
+        .addAttributeValue(itemDto.id, itemDto.nestedId(), attributeDto.name, it)
+      attributeDto.values.add(it)
+    }
   }
 
   override fun remove(node: ItemTreeNode) {
-    //todo
+    val indexOf = children().indexOf(node)
+    itemController.removeAttributeValue(itemDto.id, itemDto.nestedId(), attributeDto.name,  indexOf)
+    attributeDto.values.removeAt(indexOf)
   }
 
   override fun replace(value: ItemName) {
-    //todo
+    when(value) {
+      is NestedItemDto -> ValueDto().apply { nested = value }
+      else -> ValueDto().apply { terminal = RefDto().apply { id = value.id } }
+    }.let {
+      itemController.modifyAttributeValue(itemDto.id, itemDto.nestedId(), attributeDto.name, 0, it)
+      attributeDto.values[0] = it
+    }
   }
 
-  override fun type(): List<ItemName> {
-    TODO()
-  }
+  override fun type(): List<ItemName> = listOf(ItemName().apply { id = attributeDto.type.id })
 
-  override fun allowNested(): Boolean {
-    TODO()
-  }
+  override fun isSingle(): Boolean = attributeDto.type.isSingle
+
+  override fun allowNested(): Boolean = attributeDto.type.allowCreate
 }

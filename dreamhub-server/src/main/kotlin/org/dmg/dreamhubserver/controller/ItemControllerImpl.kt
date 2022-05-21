@@ -5,9 +5,11 @@ import org.dmg.dreamhubfront.ItemDto
 import org.dmg.dreamhubfront.ItemListDto
 import org.dmg.dreamhubfront.ValueDto
 import org.dmg.dreamhubserver.service.ItemService
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@Transactional
 class ItemControllerImpl(
   val service: ItemService
 ) : ItemController {

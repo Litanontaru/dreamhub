@@ -23,26 +23,6 @@ abstract class AbstractItemDto : ItemName() {
   var rate: String = ""
 
   abstract fun nestedId(): Long
-
-  fun getMetadata(attributeName: String): AttributeDto? =
-    extends
-      .asSequence()
-      .mapNotNull { it.item }
-      .mapNotNull {
-        it
-          .attributes
-          .find { it.type.id == TYPE.id && it.name == attributeName }
-          ?: it.getMetadata(attributeName)
-      }
-      .firstOrNull()
-
-  fun getMetadata(): Sequence<AttributeDto> =
-    extends
-      .asSequence()
-      .mapNotNull { it.item }
-      .flatMap { it.getMetadata() + it.attributes.asSequence().filter { it.type.id == TYPE.id } }
-
-  fun allowedExtensions(): List<ItemName> = (listOf(TYPE) + extends.mapNotNull { it.item }.flatMap { it.allowedExtensions() }).distinct()
 }
 
 class ItemDto : AbstractItemDto() {
@@ -130,3 +110,23 @@ object StandardTypes {
     name = "Тип"
   }
 }
+
+fun AbstractItemDto.getMetadata(attributeName: String): AttributeDto? =
+  extends
+    .asSequence()
+    .mapNotNull { it.item }
+    .mapNotNull {
+      it
+        .attributes
+        .find { it.type.id == TYPE.id && it.name == attributeName }
+        ?: it.getMetadata(attributeName)
+    }
+    .firstOrNull()
+
+fun AbstractItemDto.getMetadata(): Sequence<AttributeDto> =
+  extends
+    .asSequence()
+    .mapNotNull { it.item }
+    .flatMap { it.getMetadata() + it.attributes.asSequence().filter { it.type.id == TYPE.id } }
+
+fun AbstractItemDto.allowedExtensions(): List<ItemName> = (listOf(TYPE) + extends.mapNotNull { it.item }.flatMap { it.allowedExtensions() }).distinct()
