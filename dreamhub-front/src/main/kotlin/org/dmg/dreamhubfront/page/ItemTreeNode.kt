@@ -18,7 +18,8 @@ abstract class ItemTreeNode(
   open fun add(value: ItemName): Unit = throw UnsupportedOperationException()
   open fun remove(node: ItemTreeNode): Unit = throw UnsupportedOperationException()
   open fun replace(value: ItemName): Unit = throw UnsupportedOperationException()
-  open fun type(): List<ItemName> = throw UnsupportedOperationException()
+  open fun createNested(): NestedItemDto = throw UnsupportedOperationException()
+  open fun types(): List<ItemName> = throw UnsupportedOperationException()
   open fun isSingle(): Boolean = true
   open fun allowNested(): Boolean = false
 
@@ -98,7 +99,7 @@ class ItemDtoTreeNode(
 
   override fun canCompact() = count() == 1
 
-  override fun type() = listOf(STRING, TYPE)
+  override fun types() = listOf(STRING, TYPE)
 
   override fun getAsPrimitive() = itemDto.name
 
@@ -112,6 +113,15 @@ class ItemDtoTreeNode(
         itemDto = newValue
       }
     }
+  }
+
+  override fun createNested(): NestedItemDto = when (val item = itemDto) {
+    is ItemDto -> NestedItemDto().apply {
+      id = item.id
+      nestedId = item.nextNestedId
+      item.nextNestedId = item.nextNestedId + 1
+    }
+    else -> throw IllegalStateException()
   }
 }
 
@@ -130,7 +140,7 @@ abstract class ValueNode(
 
   override fun canCompact() = false
 
-  override fun type() = listOf(type)
+  override fun types() = listOf(type)
 }
 
 class FormulaNode(
@@ -199,7 +209,7 @@ class ExtendsNode(
     }
   }
 
-  override fun type(): List<ItemName> = itemDto.allowedExtensions()
+  override fun types(): List<ItemName> = itemDto.allowedExtensions()
 }
 
 class AllowedExtensionsNode(
@@ -231,7 +241,7 @@ class AllowedExtensionsNode(
     }
   }
 
-  override fun type() = listOf(TYPE)
+  override fun types() = listOf(TYPE)
 }
 
 class ItemNameNode(private val itemName: ItemName, parent: ItemTreeNode) : ItemTreeNode(parent) {
@@ -299,7 +309,7 @@ class ItemAttributeNode(
   override fun canCompact() = attributeDto.type.isSingle
 
   override fun add(value: ItemName) {
-    when(value) {
+    when (value) {
       is NestedItemDto -> ValueDto().apply { nested = value }
       else -> ValueDto().apply { terminal = RefDto().apply { id = value.id } }
     }.let {
@@ -311,12 +321,12 @@ class ItemAttributeNode(
 
   override fun remove(node: ItemTreeNode) {
     val indexOf = children().indexOf(node)
-    itemController.removeAttributeValue(itemDto.id, itemDto.nestedId(), attributeDto.name,  indexOf)
+    itemController.removeAttributeValue(itemDto.id, itemDto.nestedId(), attributeDto.name, indexOf)
     attributeDto.values.removeAt(indexOf)
   }
 
   override fun replace(value: ItemName) {
-    when(value) {
+    when (value) {
       is NestedItemDto -> ValueDto().apply { nested = value }
       else -> ValueDto().apply { terminal = RefDto().apply { id = value.id } }
     }.let {
@@ -325,7 +335,10 @@ class ItemAttributeNode(
     }
   }
 
-  override fun type(): List<ItemName> = listOf(ItemName().apply { id = attributeDto.type.id })
+  override fun createNested(): NestedItemDto =
+    generateSequence(parent) { it.parent }.last().createNested()
+
+  override fun types(): List<ItemName> = listOf(ItemName().apply { id = attributeDto.type.id })
 
   override fun isSingle(): Boolean = attributeDto.type.isSingle
 

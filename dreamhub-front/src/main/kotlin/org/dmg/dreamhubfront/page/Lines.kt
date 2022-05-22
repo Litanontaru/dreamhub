@@ -6,22 +6,26 @@ import com.vaadin.flow.component.checkbox.Checkbox
 import com.vaadin.flow.component.html.Label
 import com.vaadin.flow.component.icon.Icon
 import com.vaadin.flow.component.icon.VaadinIcon
+import com.vaadin.flow.component.menubar.MenuBar
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.textfield.TextField
 import org.dmg.dreamhubfront.ItemController
+import org.dmg.dreamhubfront.NestedItemDto
+import org.dmg.dreamhubfront.RefDto
 
 object Lines {
   fun toComponent(
     item: ItemTreeNode,
     editing: Boolean,
     itemController: ItemController,
+    settingId: Long,
     refreshItem: (ItemTreeNode, Boolean) -> Unit
   ): HorizontalLayout = item
     .compacted()
     .toList()
     .map {
-      toComponent(it).also {
+      toComponent(it, settingId).also {
         it.itemController = itemController
         it.refreshItem = refreshItem
       }
@@ -44,12 +48,12 @@ object Lines {
       }
     }
 
-  private fun toComponent(node: ItemTreeNode): EditableLine = when (node) {
+  private fun toComponent(node: ItemTreeNode, settingId: Long): EditableLine = when (node) {
     is IsTypeNode -> BooleanLine(node)
     is ValueNode -> StringLine(node)
     else -> when {
-      node.isSingle() -> RefLine(node)
-      else -> MultiRefLine(node)
+      node.isSingle() -> RefLine(node, settingId)
+      else -> MultiRefLine(node, settingId)
     }
   }
 }
@@ -112,7 +116,7 @@ class BooleanLine(private val item: ValueNode) : EditableLine() {
     val initial = item.getAsPrimitive() as Boolean
     return if (editing) {
       val editField = Checkbox().apply {
-        value =  initial
+        value = initial
 
         addValueChangeListener { item.setAsPrimitive(it.value) }
       }
@@ -125,29 +129,47 @@ class BooleanLine(private val item: ValueNode) : EditableLine() {
 }
 
 
-open class RefLine(private val item: ItemTreeNode): EditableLine() {
+open class RefLine(
+  private val item: ItemTreeNode,
+  private val settingId: Long
+) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
     val name = item.name()?.let { "$it:" } ?: ""
 
     return if (editing && canAdd()) {
       val addButton = Button(Icon(VaadinIcon.PLUS)) {
-        /*TreeObjectOptionSelection(
-          locator.treeObjectDictionary,
-          item.dictionary(),
-          locator.settings.map { it.id },
-          null
+        OptionSelection(
+          itemController,
+          item.types(),
+          settingId
         ) {
           item.add(it)
           refreshItem(item, true)
-        }.open()*/
+        }.open()
       }
       if (item.allowNested()) {
-        val createButton = Button(Icon(VaadinIcon.MAGIC)) {
-          /*val new = locator.treeObjectDictionary.create(item.dictionary().single(), locator.setting.id)
-          item.add(new)
-          refreshItem(item, true)*/
+        val createButton = if (item.types().size == 1) {
+          Button(Icon(VaadinIcon.MAGIC)) {
+            item.createNested().apply {
+              extends.add(RefDto().also { it.id = item.types()[0].id })
+              item.add(this)
+            }
+            refreshItem(item, true)
+          }
+        } else {
+          MenuBar().apply {
+            val button = addItem(Icon(VaadinIcon.MAGIC))
+            item.types().forEach { type ->
+              button.subMenu.addItem(type.name) {
+                item.createNested().apply {
+                  extends.add(RefDto().also { it.id = type.id })
+                  item.add(this)
+                }
+                refreshItem(item, true)
+              }
+            }
+          }
         }
-
         listOf(StringLineElement(name), ComponentLineElement(addButton, createButton))
       } else {
         listOf(StringLineElement(name), ComponentLineElement(addButton))
@@ -160,6 +182,6 @@ open class RefLine(private val item: ItemTreeNode): EditableLine() {
   open fun canAdd() = !item.hasChildren()
 }
 
-class MultiRefLine(item: ItemTreeNode): RefLine(item) {
+class MultiRefLine(item: ItemTreeNode, settingId: Long) : RefLine(item, settingId) {
   override fun canAdd() = true
 }

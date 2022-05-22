@@ -20,7 +20,7 @@ interface ItemController {
   fun getAllTypes(@PathVariable settingId: Long): List<TypeDto>
 
   @GetMapping("/settings/{settingId}/subitems/")
-  fun getSubItems(@PathVariable settingId: Long, @PathVariable superTypeIds: List<Long>): List<ItemListDto>
+  fun getSubItems(@PathVariable settingId: Long, @RequestParam superTypeIds: List<Long>): List<ItemListDto>
 
   //--------------------------------------------------------------------------------------------------------------------
 

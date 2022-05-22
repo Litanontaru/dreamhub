@@ -42,7 +42,7 @@ class SettingView(
 
   private fun set(settingId: Long) {
     if (settingId != this.settingId) {
-      val view = ItemView(itemController, itemTreeDataProviderService)
+      val view = ItemView(itemController, itemTreeDataProviderService, settingId)
 
       val types = itemController.getAllTypes(settingId)
       val dataProvider = itemsTreeDataProviderService(settingId)

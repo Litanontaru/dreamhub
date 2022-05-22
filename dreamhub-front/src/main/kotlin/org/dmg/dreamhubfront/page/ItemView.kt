@@ -7,7 +7,8 @@ import org.dmg.dreamhubfront.ItemController
 
 class ItemView(
   private val itemController: ItemController,
-  private val itemTreeDataProviderService: ItemTreeDataProviderService
+  private val itemTreeDataProviderService: ItemTreeDataProviderService,
+  private val settingId: Long
 ): VerticalLayout() {
   var itemId: Long = -1
     set(value) = setItem(value)
@@ -50,7 +51,7 @@ class ItemView(
           tree.addSelectionListener { updateSelection(it.firstSelectedItem.orElse(null)) }
 
           tree.addComponentHierarchyColumn { item ->
-            Lines.toComponent(item, item == selectedItem, itemController) { node, refreshChildren ->
+            Lines.toComponent(item, item == selectedItem, itemController, settingId) { node, refreshChildren ->
               dataProvider.refreshItem(node, refreshChildren)
             }
           }.also {
