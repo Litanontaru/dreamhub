@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.dmg.dreamhubfront.*
 import org.dmg.dreamhubfront.StandardTypes.TYPE
 import org.dmg.dreamhubserver.model.Item
+import org.dmg.dreamhubserver.model.ItemIndex
 import org.dmg.dreamhubserver.repository.ItemIndexRepository
 import org.dmg.dreamhubserver.repository.ItemList
 import org.dmg.dreamhubserver.repository.ItemRepository
@@ -23,7 +24,12 @@ class ItemService(
 
   fun getAll(settingId: Long, findUsages: Long): List<ItemListDto> = TODO("Not yet implemented")
 
-  fun getAllRecursiveSetting(settingId: Long, superTypeId: Long): List<ItemListDto> = TODO("Not yet implemented")
+  fun getAllRecursiveSetting(settingId: Long, superTypeId: Long): List<ItemListDto> =
+    (settingService.getDependencies(settingId) + settingId)
+      .let { itemIndexRepository.findAllByRefAndSettingIdIn(superTypeId, it) }
+      .flatMap { it.ids() }
+      .let { itemRepository.getAll(it) }
+      .map { it.toDto() }
 
   fun getAllTypes(settingId: Long): List<TypeDto> = settingService.getAllDependencyTypes(settingId)
 
@@ -65,6 +71,9 @@ class ItemService(
       definition = newItem.toJson()
     }
     itemRepository.save(item)
+
+    item.reindexRecursive()
+
     return get(item.id)
   }
 
@@ -147,15 +156,24 @@ class ItemService(
     itemRepository
       .findById(id)
       .get()
-      .modify(nestedId) { it.extends.add(RefDto().also { it.id = newExtendsId }) }
-      .prepare(id)
+      .let { item ->
+        item
+          .modify(nestedId) { it.extends.add(RefDto().also { it.id = newExtendsId }) }
+          .prepare(id)
+          .also { item.reindexRecursive() }
+      }
+
 
   fun removeExtends(id: Long, nestedId: Long, oldExtendsId: Long): ItemDto =
     itemRepository
       .findById(id)
       .get()
-      .modify(nestedId) { it.extends.removeIf { it.id == oldExtendsId } }
-      .prepare(id)
+      .let { item ->
+        item
+          .modify(nestedId) { it.extends.removeIf { it.id == oldExtendsId } }
+          .prepare(id)
+          .also { item.reindexRecursive() }
+      }
 
   fun addAllowedExtensions(id: Long, newAllowedExtensionId: Long) {
     itemRepository
@@ -233,6 +251,49 @@ class ItemService(
           ?.values
           ?.set(valueIndex, newValue)
       }
+  }
+
+  private fun Item.superItems(): List<Long> =
+    extends().let {
+      (it + itemRepository
+        .findAllById(it)
+        .flatMap { it.superItems() })
+        .distinct()
+    }
+
+  private fun Item.indexedSuperItems(): List<ItemIndex> = itemIndexRepository.findAllByIdsLike(",$id,")
+
+  private fun Item.reindexThis() {
+    val newId = superItems()
+    val old = indexedSuperItems()
+    val oldId = old.asSequence().map { it.ref }.toSet()
+
+    newId
+      .filter { !oldId.contains(it) }
+      .forEach {
+        itemIndexRepository
+          .findAllByRefAndSettingId(it, settingId)
+          ?.also { it.ids = it.ids + "$id," }
+          ?: ItemIndex(it, settingId)
+            .also {
+              it.ids = ",$id,"
+              itemIndexRepository.save(it)
+            }
+      }
+
+    old.filter { !newId.contains(it.id) }
+      .forEach { it.ids = it.ids.replace(",$id,", ",") }
+  }
+
+  private fun Item.reindexRecursive() {
+    reindexThis()
+    itemIndexRepository
+      .findAllByRef(id)
+      .asSequence()
+      .flatMap { it.ids() }
+      .toList()
+      .let { itemRepository.findAllById(it) }
+      .forEach { it.reindexThis() }
   }
 }
 

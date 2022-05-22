@@ -20,4 +20,6 @@ class Item: DBObject() {
 
   @Type(type = "text")
   var definition: String = ""
+
+  fun extends() = extends.split(",").map { it.toLong() }
 }

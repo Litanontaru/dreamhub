@@ -10,4 +10,6 @@ class ItemIndex(
 ): DBObject() {
   @Type(type = "text")
   var ids: String = ""
+
+  fun ids() = ids.split(",").asSequence().filter { it.isNotBlank() }.map { it.toLong() }
 }
