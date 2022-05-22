@@ -195,28 +195,49 @@ class ItemService(
       .modify { it.allowedExtensions.removeIf { it.id == oldAllowedExtensionId } }
   }
 
+  fun addMetadata(id: Long, newMetadata: MetadataDto) {
+    itemRepository
+      .findById(id)
+      .get()
+      .modify { it.metadata.add(newMetadata) }
+  }
+
+  fun removeMetadata(id: Long, attributeName: String) {
+    itemRepository
+      .findById(id)
+      .get()
+      .modify { it.metadata.removeIf { it.attributeName == attributeName } }
+  }
+
+  fun modifyMetadata(id: Long, newMetadata: MetadataDto) {
+    itemRepository
+      .findById(id)
+      .get()
+      .modify {
+        it.metadata.filter { it.attributeName == newMetadata.attributeName }.forEach {
+          it.typeId = newMetadata.typeId
+          it.isSingle = newMetadata.isSingle
+          it.allowCreate = newMetadata.allowCreate
+        }
+      }
+  }
+
   fun addAttributeValue(id: Long, nestedId: Long, attributeName: String, newValue: ValueDto) {
     val item = itemRepository.findById(id).get()
     item.modify(nestedId) { dto ->
-      val attribute = (dto
+      val attribute = dto
         .attributes
-        .find { it.name == attributeName }                            //Данные уже есть
-        ?: dto.getMetadata(attributeName)?.also { metatdata ->        //Данных нет, но метаданные есть
-          AttributeDto().also {
-            it.name = attributeName
-            it.attributeOwnerId = metatdata.attributeOwnerId
-            it.type = metatdata.values[0].toAttributeTypeDto()
-            dto.attributes.add(it)
+        .firstOrNull { it.name == attributeName }                            //Данные уже есть
+        ?: dto
+          .getMetadata(attributeName)
+          ?.let { metatdata ->        //Данных нет, но метаданные есть
+            AttributeDto().also {
+              it.name = attributeName
+              dto.attributes.add(it)
+            }
           }
-        })
-        ?: AttributeDto().also {                                      //Метаданных нет, значит это новое поле - метаданные
-          it.name = attributeName
-          it.attributeOwnerId = id
-          it.type.id = TYPE.id
-          it.type.isSingle = true
-          it.type.allowCreate = false
-          dto.attributes.add(it)
-        }
+        ?: throw IllegalStateException("Cannot find attribute with name $attributeName")
+
       attribute
         .values
         .add(newValue)
@@ -265,25 +286,29 @@ class ItemService(
   private fun Item.indexedSuperItems(): List<ItemIndex> = itemIndexRepository.findAllByIdsLike(",$id,")
 
   private fun Item.reindexThis() {
-    val newId = superItems()
-    val old = indexedSuperItems()
-    val oldId = old.asSequence().map { it.ref }.toSet()
+    try {
+      val newId = superItems()
+      val old = indexedSuperItems()
+      val oldId = old.asSequence().map { it.ref }.toSet()
 
-    newId
-      .filter { !oldId.contains(it) }
-      .forEach {
-        itemIndexRepository
-          .findAllByRefAndSettingId(it, settingId)
-          ?.also { it.ids = it.ids + "$id," }
-          ?: ItemIndex(it, settingId)
-            .also {
-              it.ids = ",$id,"
-              itemIndexRepository.save(it)
-            }
-      }
+      newId
+        .filter { !oldId.contains(it) }
+        .forEach {
+          itemIndexRepository
+            .findAllByRefAndSettingId(it, settingId)
+            ?.also { it.ids = it.ids + "$id," }
+            ?: ItemIndex(it, settingId)
+              .also {
+                it.ids = ",$id,"
+                itemIndexRepository.save(it)
+              }
+        }
 
-    old.filter { !newId.contains(it.id) }
-      .forEach { it.ids = it.ids.replace(",$id,", ",") }
+      old.filter { !newId.contains(it.id) }
+        .forEach { it.ids = it.ids.replace(",$id,", ",") }
+    } catch (e: Exception) {
+      println()
+    }
   }
 
   private fun Item.reindexRecursive() {

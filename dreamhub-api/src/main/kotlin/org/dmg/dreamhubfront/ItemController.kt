@@ -66,6 +66,17 @@ interface ItemController {
 
   //--------------------------------------------------------------------------------------------------------------------
 
+  @PostMapping("/items/{id}/metadata")
+  fun addMetadata(@PathVariable id: Long, @RequestBody newMetadata: MetadataDto)
+
+  @PostMapping("/items/{id}/metadata/{attributeName}")
+  fun removeMetadata(@PathVariable id: Long, @PathVariable attributeName: String)
+
+  @PutMapping("/items/{id}/metadata")
+  fun modifyMetadata(@PathVariable id: Long, @RequestBody newMetadata: MetadataDto)
+
+  //--------------------------------------------------------------------------------------------------------------------
+
   @PostMapping("/items/{id}/{nestedId}/attribute/{attributeName}/values")
   fun addAttributeValue(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable attributeName: String, @RequestBody newValue: ValueDto)
 

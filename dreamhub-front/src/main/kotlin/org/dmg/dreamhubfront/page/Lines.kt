@@ -3,15 +3,17 @@ package org.dmg.dreamhubfront.page
 import com.vaadin.flow.component.Component
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.checkbox.Checkbox
+import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.html.Label
 import com.vaadin.flow.component.icon.Icon
 import com.vaadin.flow.component.icon.VaadinIcon
 import com.vaadin.flow.component.menubar.MenuBar
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
+import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.TextField
 import org.dmg.dreamhubfront.ItemController
-import org.dmg.dreamhubfront.NestedItemDto
+import org.dmg.dreamhubfront.ItemName
 import org.dmg.dreamhubfront.RefDto
 
 object Lines {
@@ -49,6 +51,8 @@ object Lines {
     }
 
   private fun toComponent(node: ItemTreeNode, settingId: Long): EditableLine = when (node) {
+    is MainItemDtoTreeNode -> MainItemDtoLine(node)
+    is ItemDtoTreeNode -> ItemDtoLine(node)
     is IsTypeNode -> BooleanLine(node)
     is ValueNode -> StringLine(node)
     else -> when {
@@ -128,6 +132,65 @@ class BooleanLine(private val item: ValueNode) : EditableLine() {
   }
 }
 
+class ItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
+  override fun getElements(editing: Boolean): List<LineElement> {
+    val name = item.getAsPrimitive() as String
+    return if (editing) {
+      val editField = TextField().apply {
+        value = name
+        width = "25em"
+
+        addValueChangeListener {
+          item.setAsPrimitive(it.value)
+        }
+      }
+      listOf(ComponentLineElement(editField))
+    } else {
+      listOf(StringLineElement(name))
+    }
+  }
+}
+
+class MainItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
+  override fun getElements(editing: Boolean): List<LineElement> {
+    val name = item.getAsPrimitive() as String
+    return if (editing) {
+      val editField = TextField().apply {
+        value = name
+        width = "25em"
+
+        addValueChangeListener {
+          item.setAsPrimitive(it.value)
+        }
+      }
+      val addButton = Button(Icon(VaadinIcon.PLUS)) {
+        NewMetadataDialog { attributeName ->
+          item.add(ItemName().also { it.name = attributeName })
+        }.open()
+      }
+
+      listOf(ComponentLineElement(editField, addButton))
+    } else {
+      listOf(StringLineElement(name))
+    }
+  }
+}
+
+class NewMetadataDialog(save: (String) -> Unit) : Dialog() {
+  init {
+    add(VerticalLayout().apply {
+      val field = TextField("Новый атрибут").apply {
+        value = ""
+      }
+      add(field)
+      add(Button("Ок") {
+        save(field.value)
+        close()
+      })
+      add(Button("Отмена") { close() })
+    })
+  }
+}
 
 open class RefLine(
   private val item: ItemTreeNode,

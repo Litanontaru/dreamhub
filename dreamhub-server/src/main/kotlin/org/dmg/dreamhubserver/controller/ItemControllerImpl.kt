@@ -1,9 +1,6 @@
 package org.dmg.dreamhubserver.controller
 
-import org.dmg.dreamhubfront.ItemController
-import org.dmg.dreamhubfront.ItemDto
-import org.dmg.dreamhubfront.ItemListDto
-import org.dmg.dreamhubfront.ValueDto
+import org.dmg.dreamhubfront.*
 import org.dmg.dreamhubserver.service.ItemService
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
@@ -61,6 +58,19 @@ class ItemControllerImpl(
   override fun removeAllowedExtensions(id: Long, oldAllowedExtensionId: Long) {
     service.removeAllowedExtensions(id, oldAllowedExtensionId)
   }
+
+  override fun addMetadata(id: Long, newMetadata: MetadataDto) {
+    service.addMetadata(id, newMetadata)
+  }
+
+  override fun removeMetadata(id: Long, attributeName: String) {
+    service.removeMetadata(id, attributeName)
+  }
+
+  override fun modifyMetadata(id: Long, newMetadata: MetadataDto) {
+    service.modifyMetadata(id, newMetadata)
+  }
+
 
   override fun addAttributeValue(id: Long, nestedId: Long, attributeName: String, newValue: ValueDto) {
     service.addAttributeValue(id, nestedId, attributeName, newValue)

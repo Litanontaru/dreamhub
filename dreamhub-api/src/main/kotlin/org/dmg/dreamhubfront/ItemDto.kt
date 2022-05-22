@@ -19,7 +19,6 @@ class TypeDto : ItemListDto() {
 abstract class AbstractItemDto : ItemName() {
   var extends: MutableList<RefDto> = mutableListOf()
   var attributes: MutableList<AttributeDto> = mutableListOf()
-  var superFormula: String = ""
   var rate: String = ""
 
   abstract fun nestedId(): Long
@@ -30,6 +29,7 @@ class ItemDto : AbstractItemDto() {
   var settingId: Long = 0
   var nextNestedId: Long = 0
   var allowedExtensions: MutableList<ItemName> = mutableListOf()
+  var metadata: MutableList<MetadataDto> = mutableListOf()
   var formula: String = ""
   var isType: Boolean = false
 
@@ -47,18 +47,17 @@ class RefDto {
   var item: ItemDto? = null
 }
 
-class AttributeTypeDto {
-  var id: Long = -1
+class MetadataDto {
+  var attributeName: String = ""
+  var typeId: Long = -1
   var isSingle: Boolean = false
   var allowCreate: Boolean = false
 
-  fun toItemName() = ItemName().also { it.id = id }
+  fun toItemName() = ItemName().also { it.id = typeId }
 }
 
 class AttributeDto {
   var name: String = ""
-  var attributeOwnerId: Long = -1
-  var type: AttributeTypeDto = AttributeTypeDto()
   var values: MutableList<ValueDto> = mutableListOf()
 }
 
@@ -68,15 +67,6 @@ class ValueDto {
   var primitive: String? = null
 
   var itemOwnerId: Long = 0
-
-  fun toAttributeTypeDto() = AttributeTypeDto().also {
-    var primitive = primitive!!
-    it.isSingle = !primitive.contains("[]")
-    primitive = primitive.replace("[]", "")
-    it.allowCreate = primitive.contains("+")
-    primitive = primitive.replace("+", "")
-    it.id = primitive.toLong()
-  }
 }
 
 object StandardTypes {
@@ -111,22 +101,22 @@ object StandardTypes {
   }
 }
 
-fun AbstractItemDto.getMetadata(attributeName: String): AttributeDto? =
+fun AbstractItemDto.getMetadata(attributeName: String): MetadataDto? =
   extends
     .asSequence()
     .mapNotNull { it.item }
     .mapNotNull {
       it
-        .attributes
-        .find { it.type.id == TYPE.id && it.name == attributeName }
+        .metadata
+        .firstOrNull { it.attributeName == attributeName }
         ?: it.getMetadata(attributeName)
     }
     .firstOrNull()
 
-fun AbstractItemDto.getMetadata(): Sequence<AttributeDto> =
+fun AbstractItemDto.getMetadata(): Sequence<MetadataDto> =
   extends
     .asSequence()
     .mapNotNull { it.item }
-    .flatMap { it.getMetadata() + it.attributes.asSequence().filter { it.type.id == TYPE.id } }
+    .flatMap { it.getMetadata() + it.metadata }
 
 fun AbstractItemDto.allowedExtensions(): List<ItemName> = (listOf(TYPE) + extends.mapNotNull { it.item }.flatMap { it.allowedExtensions() }).distinct()

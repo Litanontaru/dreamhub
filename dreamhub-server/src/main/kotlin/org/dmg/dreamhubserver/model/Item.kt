@@ -21,5 +21,5 @@ class Item: DBObject() {
   @Type(type = "text")
   var definition: String = ""
 
-  fun extends() = extends.split(",").map { it.toLong() }
+  fun extends() = extends.split(",").filter { it.isNotBlank() }.mapNotNull { it.toLongOrNull() }
 }

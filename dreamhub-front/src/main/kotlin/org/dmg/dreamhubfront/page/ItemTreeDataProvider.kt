@@ -18,7 +18,7 @@ class ItemTreeDataProvider(
   itemDto: ItemDto,
   itemController: ItemController
 ): AbstractBackEndHierarchicalDataProvider<ItemTreeNode, Any>() {
-  private val root = ItemDtoTreeNode(itemDto, itemController, null)
+  private val root = MainItemDtoTreeNode(itemDto, itemController)
 
   override fun getChildCount(query: HierarchicalQuery<ItemTreeNode, Any>?): Int =
     query?.parent?.count() ?: 1
