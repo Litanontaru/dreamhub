@@ -10,5 +10,5 @@ interface ItemIndexRepository: CrudRepository<ItemIndex, Long> {
 
   fun findAllByIdsLike(ids: String): List<ItemIndex>
 
-  fun findAllByRefAndSettingIdIn(ref: Long, settingId: List<Long>): List<ItemIndex>
+  fun findAllByRefInAndSettingIdIn(refs: List<Long>, settingId: List<Long>): List<ItemIndex>
 }

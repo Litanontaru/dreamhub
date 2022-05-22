@@ -24,10 +24,11 @@ class ItemService(
 
   fun getAll(settingId: Long, findUsages: Long): List<ItemListDto> = TODO("Not yet implemented")
 
-  fun getAllRecursiveSetting(settingId: Long, superTypeId: Long): List<ItemListDto> =
+  fun getAllRecursiveSetting(settingId: Long, superTypeIds: List<Long>): List<ItemListDto> =
     (settingService.getDependencies(settingId) + settingId)
-      .let { itemIndexRepository.findAllByRefAndSettingIdIn(superTypeId, it) }
+      .let { itemIndexRepository.findAllByRefInAndSettingIdIn(superTypeIds, it) }
       .flatMap { it.ids() }
+      .distinct()
       .let { itemRepository.getAll(it) }
       .map { it.toDto() }
 
