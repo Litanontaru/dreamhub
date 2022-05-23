@@ -1,21 +1,19 @@
 package org.dmg.dreamhubfront.page
 
 import com.vaadin.flow.component.Component
-import com.vaadin.flow.component.contextmenu.ContextMenu
 import com.vaadin.flow.component.grid.GridVariant
 import com.vaadin.flow.component.html.Label
 import com.vaadin.flow.component.icon.Icon
 import com.vaadin.flow.component.icon.VaadinIcon
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
-import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.treegrid.TreeGrid
+import com.vaadin.flow.function.SerializablePredicate
 import com.vaadin.flow.router.BeforeEnterEvent
 import com.vaadin.flow.router.BeforeEnterObserver
 import com.vaadin.flow.router.Route
 import org.dmg.dreamhubfront.ItemController
 import org.dmg.dreamhubfront.ItemDto
 import org.dmg.dreamhubfront.ItemListDto
-import org.dmg.dreamhubfront.TypeDto
 import javax.annotation.security.PermitAll
 
 @Route("settings/:settingId/:itemId")
@@ -60,11 +58,57 @@ class SettingView(
             else -> Label(item.name)
           }
 
-          line.apply { contextMenu(item, types, dataProvider) }
+          line/*.apply { contextMenu(item, types, dataProvider) }*/
         }.also {
           it.isAutoWidth = true
         }
-        tree.contextMenu(null, types, dataProvider)
+
+        tree.addContextMenu().apply {
+          addItem("Создать...") {
+            val path = it.item.map { it.fullName }.orElse("")
+            val template = if (path.isBlank()) "" else "$path."
+
+            EditDialog("Название", template) { fullName ->
+              itemController.add(ItemDto().also {
+                it.name = fullName.substring(fullName.lastIndexOf('.') + 1)
+                it.settingId = settingId
+                it.path = fullName.substring(0, fullName.lastIndexOf('.'))
+              }).also {
+                dataProvider.add(it.toListDto())
+                dataProvider.refreshAll()
+              }
+            }.open()
+          }
+
+          val delete = addItem("Удалить") {
+            val item = it.item.get()
+            if (item.isFolder) {
+              //todo
+            } else {
+              itemController.remove(item.item!!.id)
+              dataProvider.refreshAll()
+            }
+          }
+
+          val move = addItem("Переместить") {
+            val item = it.item.get()
+            EditDialog("Путь", item.path) { newPath ->
+              item.item?.let {
+                itemController.setPath(it.id, newPath)
+                it.path = newPath
+                dataProvider.refreshAll()
+              }
+            }.open()
+          }
+
+          dynamicContentHandler = SerializablePredicate {
+            delete.isVisible = it != null
+            move.isVisible = it != null && !it.isFolder
+
+            true
+          }
+        }
+
         tree.setDataProvider(dataProvider)
         tree.addThemeVariants(GridVariant.LUMO_COMPACT)
         tree.addItemClickListener {
@@ -80,44 +124,6 @@ class SettingView(
       add(view)
 
       this.settingId = settingId
-    }
-  }
-
-  private fun Component.contextMenu(item: ItemListView?, types: List<TypeDto>, dataProvider: ItemsTreeDataProvider) {
-    ContextMenu().also {
-      when {
-        item == null -> it.addItem("Добавить в корень")
-        item.isFolder -> it.addItem("Добавить")
-        else -> null
-      }?.also {
-        it.subMenu.addItem("Создать...") {
-          NewItemDialog { name ->
-            itemController.add(ItemDto().also {
-              it.name = name
-              it.settingId = settingId
-              it.path = item?.fullName ?: ""
-            }).also {
-              dataProvider.add(it.toListDto())
-            }
-          }.open()
-        }
-        types.forEach { type ->
-          //todo
-        }
-      }
-      if (item != null) {
-        if (item.isFolder) {
-          it.addItem("Удалить папку") {
-            //todo
-          }
-        } else {
-          it.addItem("Удалить") {
-            itemController.remove(item.item!!.id)
-          }
-        }
-      }
-
-      it.target = this
     }
   }
 }
