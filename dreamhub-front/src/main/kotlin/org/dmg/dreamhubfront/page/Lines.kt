@@ -3,6 +3,7 @@ package org.dmg.dreamhubfront.page
 import com.vaadin.flow.component.Component
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.checkbox.Checkbox
+import com.vaadin.flow.component.combobox.ComboBox
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.html.Label
 import com.vaadin.flow.component.icon.Icon
@@ -12,9 +13,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.TextField
-import org.dmg.dreamhubfront.ItemController
-import org.dmg.dreamhubfront.ItemName
-import org.dmg.dreamhubfront.RefDto
+import org.dmg.dreamhubfront.*
 
 object Lines {
   fun toComponent(
@@ -27,8 +26,9 @@ object Lines {
     .compacted()
     .toList()
     .map {
-      toComponent(it, settingId).also {
+      toComponent(it).also {
         it.itemController = itemController
+        it.settingId = settingId
         it.refreshItem = refreshItem
       }
     }
@@ -50,14 +50,16 @@ object Lines {
       }
     }
 
-  private fun toComponent(node: ItemTreeNode, settingId: Long): EditableLine = when (node) {
+  private fun toComponent(node: ItemTreeNode): EditableLine = when (node) {
     is MainItemDtoTreeNode -> MainItemDtoLine(node)
     is ItemDtoTreeNode -> ItemDtoLine(node)
     is IsTypeNode -> BooleanLine(node)
     is ValueNode -> StringLine(node)
+    is MetadataNode -> MetadataLine(node)
+    is ItemNameNode -> ItemNameLine(node)
     else -> when {
-      node.isSingle() -> RefLine(node, settingId)
-      else -> MultiRefLine(node, settingId)
+      node.isSingle() -> RefLine(node)
+      else -> MultiRefLine(node)
     }
   }
 }
@@ -91,6 +93,7 @@ class StringLineElement(private val value: String) : LineElement {
 }
 
 open class EditableLine {
+  var settingId: Long = -1
   lateinit var itemController: ItemController
   lateinit var refreshItem: (ItemTreeNode, Boolean) -> Unit
 
@@ -132,6 +135,65 @@ class BooleanLine(private val item: ValueNode) : EditableLine() {
   }
 }
 
+class MetadataLine(private val item: MetadataNode) : EditableLine() {
+  override fun getElements(editing: Boolean): List<LineElement> {
+    val names = (itemController.getAllTypes(settingId) + StandardTypes.ALL)
+      .associate { it.id to it.name }
+
+    return if (editing) {
+      val editType = ComboBox<Long>().apply {
+        setItems(names.keys.toList())
+        setItemLabelGenerator { names[it] }
+
+        value = item.getAsPrimitive().typeId
+        width = "25em"
+
+        addValueChangeListener {
+          item.setAsPrimitive(item.getAsPrimitive().apply { typeId = it.value })
+        }
+      }
+      val isSingle = Checkbox("Один").apply {
+        value = item.getAsPrimitive().isSingle
+
+        addValueChangeListener {
+          item.setAsPrimitive(item.getAsPrimitive().apply { isSingle = it.value })
+        }
+      }
+      val allowCreate = Checkbox("Вложенные").apply {
+        value = item.getAsPrimitive().allowCreate
+
+        addValueChangeListener {
+          item.setAsPrimitive(item.getAsPrimitive().apply { allowCreate = it.value })
+        }
+      }
+      val removeButton = Button(Icon(VaadinIcon.CLOSE)) {
+        item.parent!!.remove(item)
+        refreshItem(item.parent, true)
+      }
+
+      listOf(StringLineElement(item.name()), ComponentLineElement(editType, isSingle, allowCreate, removeButton))
+    } else {
+      names[item.getAsPrimitive().typeId]
+        ?.let { listOf(StringLineElement("${item.name()}: $it")) }
+        ?: listOf(StringLineElement("${item.name()}: ---"))
+    }
+  }
+}
+
+class ItemNameLine(private val item: ItemTreeNode) : EditableLine() {
+  override fun getElements(editing: Boolean): List<LineElement> {
+    return if (editing) {
+      val removeButton = Button(Icon(VaadinIcon.CLOSE)) {
+        item.parent!!.remove(item)
+        refreshItem(item.parent, true)
+      }
+      listOf(StringLineElement("${item.name()}"), ComponentLineElement(removeButton))
+    } else {
+      listOf(StringLineElement("${item.name()}"))
+    }
+  }
+}
+
 class ItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
     val name = item.getAsPrimitive() as String
@@ -166,6 +228,7 @@ class MainItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
       val addButton = Button(Icon(VaadinIcon.PLUS)) {
         NewMetadataDialog { attributeName ->
           item.add(ItemName().also { it.name = attributeName })
+          refreshItem(item, true)
         }.open()
       }
 
@@ -192,10 +255,7 @@ class NewMetadataDialog(save: (String) -> Unit) : Dialog() {
   }
 }
 
-open class RefLine(
-  private val item: ItemTreeNode,
-  private val settingId: Long
-) : EditableLine() {
+open class RefLine(private val item: ItemTreeNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
     val name = item.name()?.let { "$it:" } ?: ""
 
@@ -245,6 +305,6 @@ open class RefLine(
   open fun canAdd() = !item.hasChildren()
 }
 
-class MultiRefLine(item: ItemTreeNode, settingId: Long) : RefLine(item, settingId) {
+class MultiRefLine(item: ItemTreeNode) : RefLine(item) {
   override fun canAdd() = true
 }

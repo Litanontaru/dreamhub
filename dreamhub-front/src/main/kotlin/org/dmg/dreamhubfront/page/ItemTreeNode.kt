@@ -13,7 +13,7 @@ abstract class ItemTreeNode(
   abstract fun hasChildren(): Boolean
   abstract fun children(): List<ItemTreeNode>
   abstract fun count(): Int
-  abstract fun canCompact(): Boolean
+  open fun canCompact(): Boolean = false
 
   open fun add(value: ItemName): Unit = throw UnsupportedOperationException()
   open fun remove(node: ItemTreeNode): Unit = throw UnsupportedOperationException()
@@ -78,8 +78,6 @@ open class ItemDtoTreeNode(
 
   override fun count(): Int = 1 + itemDto.getMetadata().count()
 
-  override fun canCompact() = count() == 1
-
   override fun types() = listOf(TYPE)
 
   override fun getAsPrimitive() = itemDto.name
@@ -119,7 +117,7 @@ class MainItemDtoTreeNode(
     children += super.children()
 
     itemDto.metadata.forEach {
-      children.add(MetadataField(itemDto, it, itemController, this))
+      children.add(MetadataNode(itemDto, it, itemController, this))
     }
 
     return children
@@ -135,7 +133,7 @@ class MainItemDtoTreeNode(
 
   override fun remove(node: ItemTreeNode) {
     when (node) {
-      is MetadataField -> {
+      is MetadataNode -> {
         itemController.removeMetadata(itemDto.id, node.name())
         itemDto.metadata.removeIf {it.attributeName == node.name()}
       }
@@ -143,7 +141,7 @@ class MainItemDtoTreeNode(
   }
 }
 
-class MetadataField(
+class MetadataNode(
   private val itemDto: ItemDto,
   private var metadataDto: MetadataDto,
   private val itemController: ItemController,
@@ -156,8 +154,6 @@ class MetadataField(
   override fun children(): List<ItemTreeNode> = listOf()
 
   override fun count(): Int  = 0
-
-  override fun canCompact(): Boolean = false
 
   override fun getAsPrimitive() = metadataDto
 
@@ -183,8 +179,6 @@ abstract class ValueNode(
   override fun children(): List<ItemTreeNode> = listOf()
 
   override fun count() = 0
-
-  override fun canCompact() = false
 
   override fun types() = listOf(type)
 }
@@ -237,8 +231,6 @@ class ExtendsNode(
 
   override fun count() = itemDto.extends.size
 
-  override fun canCompact(): Boolean = false
-
   override fun add(value: ItemName) {
     itemController
       .addExtends(itemDto.id, itemDto.nestedId(), value.id)
@@ -254,6 +246,8 @@ class ExtendsNode(
       }
     }
   }
+
+  override fun isSingle(): Boolean = false
 
   override fun types(): List<ItemName> = itemDto.allowedExtensions()
 }
@@ -271,8 +265,6 @@ class AllowedExtensionsNode(
 
   override fun count(): Int = itemDto.allowedExtensions.size
 
-  override fun canCompact(): Boolean = false
-
   override fun add(value: ItemName) {
     itemController.addAllowedExtensions(itemDto.id, value.id)
     itemDto.allowedExtensions.add(value)
@@ -288,6 +280,8 @@ class AllowedExtensionsNode(
   }
 
   override fun types() = listOf(TYPE)
+
+  override fun isSingle(): Boolean  = false
 }
 
 class ItemNameNode(private val itemName: ItemName, parent: ItemTreeNode) : ItemTreeNode(parent) {
@@ -300,9 +294,6 @@ class ItemNameNode(private val itemName: ItemName, parent: ItemTreeNode) : ItemT
   override fun children(): List<ItemTreeNode> = listOf()
 
   override fun count(): Int = 0
-
-  override fun canCompact(): Boolean = false
-
 }
 
 class PrimitiveAttributeNode(

@@ -31,7 +31,7 @@ interface ItemController {
   fun add(@RequestBody newItem: ItemDto): ItemDto
 
   @DeleteMapping("/items/{id}")
-  fun remove(id: Long)
+  fun remove(@PathVariable id: Long)
 
   //--------------------------------------------------------------------------------------------------------------------
 

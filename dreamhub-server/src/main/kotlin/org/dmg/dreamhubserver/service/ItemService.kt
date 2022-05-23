@@ -7,6 +7,7 @@ import org.dmg.dreamhubserver.model.Item
 import org.dmg.dreamhubserver.model.ItemIndex
 import org.dmg.dreamhubserver.repository.ItemIndexRepository
 import org.dmg.dreamhubserver.repository.ItemList
+import org.dmg.dreamhubserver.repository.ItemListWithExtends
 import org.dmg.dreamhubserver.repository.ItemRepository
 import org.springframework.stereotype.Service
 
@@ -30,9 +31,19 @@ class ItemService(
       .flatMap { it.ids() }
       .distinct()
       .let { itemRepository.getAll(it) }
+      .let {
+        when {
+          superTypeIds.contains(TYPE.id) -> it + getAllTypeList(settingId)
+          else -> it
+        }
+      }
+      .distinctBy { it.getId() }
       .map { it.toDto() }
 
-  fun getAllTypes(settingId: Long): List<TypeDto> = settingService.getAllDependencyTypes(settingId)
+  fun getAllTypes(settingId: Long): List<TypeDto> = getAllTypeList(settingId).map { it.toDto() }
+
+  private fun getAllTypeList(settingId: Long) =
+    (settingService.getDependencies(settingId) + settingId).let { itemRepository.getAllTypes(it) }
 
   fun get(id: Long): ItemDto = itemRepository.getDefinitionById(id).toDto().prepare(id)
 
@@ -161,7 +172,12 @@ class ItemService(
         item
           .modify(nestedId) { it.extends.add(RefDto().also { it.id = newExtendsId }) }
           .prepare(id)
-          .also { item.reindexRecursive() }
+          .also {
+            if (nestedId == -1L) {
+              item.extends = (item.extends() + newExtendsId).joinToString()
+            }
+            item.reindexRecursive()
+          }
       }
 
 
@@ -173,7 +189,12 @@ class ItemService(
         item
           .modify(nestedId) { it.extends.removeIf { it.id == oldExtendsId } }
           .prepare(id)
-          .also { item.reindexRecursive() }
+          .also {
+            if (nestedId == -1L) {
+              item.extends = item.extends().filter { it != oldExtendsId }.joinToString()
+            }
+            item.reindexRecursive()
+          }
       }
 
   fun addAllowedExtensions(id: Long, newAllowedExtensionId: Long) {
@@ -286,33 +307,34 @@ class ItemService(
   private fun Item.indexedSuperItems(): List<ItemIndex> = itemIndexRepository.findAllByIdsLike(",$id,")
 
   private fun Item.reindexThis() {
-    try {
-      val newId = superItems()
-      val old = indexedSuperItems()
-      val oldId = old.asSequence().map { it.ref }.toSet()
+    val newId = superItems()
+    val old = indexedSuperItems()
+    val oldId = old.asSequence().map { it.ref }.toSet()
 
-      newId
-        .filter { !oldId.contains(it) }
-        .forEach {
-          itemIndexRepository
-            .findAllByRefAndSettingId(it, settingId)
-            ?.also { it.ids = it.ids + "$id," }
-            ?: ItemIndex(it, settingId)
-              .also {
-                it.ids = ",$id,"
-                itemIndexRepository.save(it)
-              }
-        }
+    newId
+      .filter { !oldId.contains(it) }
+      .forEach {
+        itemIndexRepository
+          .findAllByRefAndSettingId(it, settingId)
+          ?.also { it.ids = it.ids + "$id," }
+          ?: ItemIndex(it, settingId)
+            .also {
+              it.ids = ",$id,"
+              itemIndexRepository.save(it)
+            }
+      }
 
-      old.filter { !newId.contains(it.id) }
-        .forEach { it.ids = it.ids.replace(",$id,", ",") }
-    } catch (e: Exception) {
-      println()
-    }
+    old.filter { !newId.contains(it.id) }
+      .forEach { it.ids = it.ids.replace(",$id,", ",") }
+  }
+
+  private fun Item.reindexExtends() {
+    reindexThis()
+    itemRepository.findAllById(extends()).forEach { it.reindexExtends() }
   }
 
   private fun Item.reindexRecursive() {
-    reindexThis()
+    reindexExtends()
     itemIndexRepository
       .findAllByRef(id)
       .asSequence()
@@ -332,4 +354,12 @@ fun ItemList.toDto(): ItemListDto = ItemListDto().also {
   it.name = getName()
   it.path = getPath()
   it.settingId = getSettingId()
+}
+
+fun ItemListWithExtends.toDto() = TypeDto().apply {
+  id = getId()
+  name = getName()
+  path = getPath()
+  settingId = getSettingId()
+  superTypeIds = getExtends().split(",").mapNotNull { it.toLongOrNull() }
 }

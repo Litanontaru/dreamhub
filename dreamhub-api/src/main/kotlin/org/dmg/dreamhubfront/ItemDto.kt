@@ -13,7 +13,7 @@ open class ItemListDto : ItemName() {
 }
 
 class TypeDto : ItemListDto() {
-  var subtypeIds: List<Long> = listOf()
+  var superTypeIds: List<Long> = listOf()
 }
 
 abstract class AbstractItemDto : ItemName() {
@@ -70,6 +70,11 @@ class ValueDto {
 }
 
 object StandardTypes {
+  val NOTHING = ItemName().apply {
+    id = -1
+    name = "Не указан"
+  }
+
   val STRING = ItemName().apply {
     id = -2
     name = "Строка"
@@ -99,6 +104,8 @@ object StandardTypes {
     id = -7
     name = "Тип"
   }
+
+  val ALL = listOf(NOTHING, STRING, POSITIVE, INT, DECIMAL, BOOLEAN, TYPE)
 }
 
 fun AbstractItemDto.getMetadata(attributeName: String): MetadataDto? =
