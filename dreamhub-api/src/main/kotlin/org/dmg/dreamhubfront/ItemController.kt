@@ -55,7 +55,7 @@ interface ItemController {
   @PostMapping("/items/{id}/{nestedId}/extends/{newExtendsId}")
   fun addExtends(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable newExtendsId: Long): ItemDto
 
-  @DeleteMapping("/items/{id}/{nestedId}/extends/{newExtendsId}")
+  @DeleteMapping("/items/{id}/{nestedId}/extends/{oldExtendsId}")
   fun removeExtends(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable oldExtendsId: Long): ItemDto
 
   @PostMapping("/items/{id}/allowedextensions/{newAllowedExtensionId}")

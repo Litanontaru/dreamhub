@@ -206,7 +206,11 @@ class ItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
           item.setAsPrimitive(it.value)
         }
       }
-      listOf(ComponentLineElement(editField))
+      val removeButton = Button(Icon(VaadinIcon.CLOSE)) {
+        item.parent!!.remove(item)
+        refreshItem(item.parent, true)
+      }
+      listOf(ComponentLineElement(editField, removeButton))
     } else {
       listOf(StringLineElement(name))
     }
