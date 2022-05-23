@@ -42,7 +42,6 @@ class SettingView(
     if (settingId != this.settingId) {
       val view = ItemView(itemController, itemTreeDataProviderService, settingId)
 
-      val types = itemController.getAllTypes(settingId)
       val dataProvider = itemsTreeDataProviderService(settingId)
 
       TreeGrid<ItemListView>().also { tree ->
@@ -115,7 +114,7 @@ class SettingView(
           it.item.item?.let { view.itemId = it.id }
         }
 
-        tree.width = "100%"
+        tree.width = "30%"
         tree.height = "100%"
 
         add(tree)
