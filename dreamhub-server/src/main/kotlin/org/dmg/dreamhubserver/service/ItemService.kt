@@ -180,7 +180,6 @@ class ItemService(
           }
       }
 
-
   fun removeExtends(id: Long, nestedId: Long, oldExtendsId: Long): ItemDto =
     itemRepository
       .findById(id)
