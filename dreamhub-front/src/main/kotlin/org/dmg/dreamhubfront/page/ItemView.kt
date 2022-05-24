@@ -61,12 +61,23 @@ class ItemView(
           }
 
           tree.setDataProvider(dataProvider)
+          tree.expand(dataProvider.root)
+
+          tree.width = "100%"
+          tree.height = "100%"
+
           add(tree)
-          width = "100%"
-          height = "100%"
         }
         width = "100%"
+        height = "100%"
+        isSpacing = false
+        isPadding = false
       })
+
+      width = "100%"
+      height = "100%"
+      isSpacing = false
+      isPadding = false
     }
   }
 }
