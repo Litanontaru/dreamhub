@@ -15,13 +15,17 @@ class ItemsTreeDataProviderService(
 }
 
 class ItemsTreeDataProvider(
-  itemController: ItemController,
-  settingId: Long
+  private val itemController: ItemController,
+  private val settingId: Long
 ) : AbstractBackEndHierarchicalDataProvider<ItemListView, Any>() {
   private val root = "".toFolder()
   private var tree: MutableMap<ItemListView, MutableList<ItemListView>>
 
   init {
+    tree = readTree()
+  }
+
+  private fun readTree(): MutableMap<ItemListView, MutableList<ItemListView>> {
     val terminals = itemController.getAll(settingId, null, null)
       .groupBy { it.path }
       .mapValues { it.value.map { it.toTerminal() }.sortedBy { it.name } }
@@ -29,11 +33,26 @@ class ItemsTreeDataProvider(
       .map { it.toFolder() }
       .filter { it.name.isNotBlank() }
       .groupBy { it.path }
-    tree = (folders.asSequence() + terminals.asSequence())
+    return (folders.asSequence() + terminals.asSequence())
       .groupBy { it.key }
       .mapValues { it.value.flatMap { it.value }.toMutableList() }
       .mapKeys { it.key.toFolder() }
       .toMutableMap()
+  }
+
+  override fun refreshAll() {
+    tree = readTree()
+    super.refreshAll()
+  }
+
+  override fun refreshItem(item: ItemListView?, refreshChildren: Boolean) {
+    tree = readTree()
+    super.refreshItem(item, refreshChildren)
+  }
+
+  override fun refreshItem(item: ItemListView?) {
+    tree = readTree()
+    super.refreshItem(item)
   }
 
   override fun getChildCount(query: HierarchicalQuery<ItemListView, Any>?): Int =
