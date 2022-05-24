@@ -72,6 +72,15 @@ class ItemService(
       .forEach { it.item = get(it.id) }
   }
 
+  private fun AbstractItemDto.refreshExtendsOnly(): AbstractItemDto {
+    extends
+      .forEach() {
+        it.item = itemRepository.getDefinitionById(it.id).toDto()
+        it.item?.refreshExtendsOnly()
+      }
+    return this
+  }
+
   fun add(newItem: ItemDto): ItemDto {
     removeRefItems(newItem)
     val item = Item().apply {
@@ -249,6 +258,7 @@ class ItemService(
         .attributes
         .firstOrNull { it.name == attributeName }                            //Данные уже есть
         ?: dto
+          .refreshExtendsOnly()
           .getMetadata(attributeName)
           ?.let { metatdata ->        //Данных нет, но метаданные есть
             AttributeDto().also {
