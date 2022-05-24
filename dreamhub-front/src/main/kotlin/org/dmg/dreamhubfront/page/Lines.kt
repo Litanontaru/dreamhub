@@ -106,7 +106,6 @@ class StringLine(private val item: ValueNode) : EditableLine() {
     return if (editing) {
       val editField = TextField().apply {
         value = initial
-        width = "6em"
 
         addValueChangeListener { item.setAsPrimitive(it.value) }
       }
@@ -230,7 +229,7 @@ class MainItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
         }
       }
       val addButton = Button(Icon(VaadinIcon.PLUS)) {
-        NewMetadataDialog { attributeName ->
+        EditDialog("Новый атрибут", "") { attributeName ->
           item.add(ItemName().also { it.name = attributeName })
           refreshItem(item, true)
         }.open()
@@ -240,22 +239,6 @@ class MainItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
     } else {
       listOf(StringLineElement(name))
     }
-  }
-}
-
-class NewMetadataDialog(save: (String) -> Unit) : Dialog() {
-  init {
-    add(VerticalLayout().apply {
-      val field = TextField("Новый атрибут").apply {
-        value = ""
-      }
-      add(field)
-      add(Button("Ок") {
-        save(field.value)
-        close()
-      })
-      add(Button("Отмена") { close() })
-    })
   }
 }
 
