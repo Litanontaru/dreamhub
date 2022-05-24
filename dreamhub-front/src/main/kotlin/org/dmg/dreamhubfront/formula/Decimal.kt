@@ -47,3 +47,12 @@ fun BigDecimal.toDecimal(): Decimal = Decimal(this, "")
 fun Int.toDecimal(): Decimal = this.toBigDecimal().toDecimal()
 
 fun Iterable<Decimal>.sum() = fold<Decimal, Decimal>(Decimal.NONE, { a, b -> a + b })
+
+fun String.toDecimalOrNull(): Decimal? =
+  takeIf { it.isNotBlank() }
+    ?.split(" ")
+    ?.takeIf { it.size <= 2 }
+    ?.let { parts ->
+      val type = if (parts.size == 1) "" else parts[1]
+      parts[0].toBigDecimalOrNull()?.let { Decimal(it, type) }
+    }

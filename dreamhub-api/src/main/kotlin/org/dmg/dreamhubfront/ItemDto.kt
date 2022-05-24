@@ -5,6 +5,10 @@ import org.dmg.dreamhubfront.StandardTypes.TYPE
 open class ItemName {
   var id: Long = 0
   var name: String = ""
+
+  override fun equals(other: Any?): Boolean = (this === other) || (other is ItemName && id == other.id)
+
+  override fun hashCode(): Int = id.hashCode()
 }
 
 open class ItemListDto : ItemName() {

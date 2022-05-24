@@ -4,16 +4,21 @@ import com.vaadin.flow.component.Component
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.checkbox.Checkbox
 import com.vaadin.flow.component.combobox.ComboBox
-import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.html.Label
 import com.vaadin.flow.component.icon.Icon
 import com.vaadin.flow.component.icon.VaadinIcon
 import com.vaadin.flow.component.menubar.MenuBar
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
-import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.TextField
 import org.dmg.dreamhubfront.*
+import org.dmg.dreamhubfront.StandardTypes.BOOLEAN
+import org.dmg.dreamhubfront.StandardTypes.DECIMAL
+import org.dmg.dreamhubfront.StandardTypes.INT
+import org.dmg.dreamhubfront.StandardTypes.POSITIVE
+import org.dmg.dreamhubfront.StandardTypes.STRING
+import org.dmg.dreamhubfront.formula.Decimal
+import org.dmg.dreamhubfront.formula.toDecimalOrNull
 
 object Lines {
   fun toComponent(
@@ -55,7 +60,14 @@ object Lines {
     is ReferenceItemDtoTreeNode -> ReferenceLine(node)
     is ItemDtoTreeNode -> ItemDtoLine(node)
     is IsTypeNode -> BooleanLine(node)
-    is ValueNode -> StringLine(node)
+    is ValueNode -> when (node.types().first()) {
+      STRING -> StringLine(node)
+      POSITIVE -> StringLine(node) { it.toIntOrNull()?.takeIf { it > 0L }?.toString() ?: "" }
+      INT -> StringLine(node) { it.toIntOrNull()?.toString() ?: "" }
+      DECIMAL -> StringLine(node) { it.toDecimalOrNull()?.toString() ?: "" }
+      BOOLEAN -> BooleanLine(node)
+      else -> throw UnsupportedOperationException("Unknown type ${node.types().first()}")
+    }
     is MetadataNode -> MetadataLine(node)
     is ItemNameNode -> ItemNameLine(node)
     else -> when {
@@ -101,14 +113,14 @@ open class EditableLine {
   open fun getElements(editing: Boolean): List<LineElement> = listOf()
 }
 
-class StringLine(private val item: ValueNode) : EditableLine() {
+class StringLine(private val item: ItemTreeNode, private val validator: (String) -> String = { it }) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
-    val initial = item.getAsPrimitive() as String?
+    val initial = (item.getAsPrimitive() as String?) ?: ""
     return if (editing) {
       val editField = TextField().apply {
         value = initial
 
-        addValueChangeListener { item.setAsPrimitive(it.value) }
+        addValueChangeListener { item.setAsPrimitive(validator(it.value)) }
       }
 
       listOf(StringLineElement("${item.name()}: "), ComponentLineElement(editField))
@@ -194,7 +206,7 @@ class ItemNameLine(private val item: ItemTreeNode) : EditableLine() {
   }
 }
 
-class ReferenceLine(private val item: ItemTreeNode): EditableLine() {
+class ReferenceLine(private val item: ItemTreeNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
     val name = item.getAsPrimitive() as String
     return if (editing) {
