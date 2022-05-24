@@ -63,13 +63,19 @@ class ItemService(
     return this
   }
 
-  private fun ItemDto.getRefItems() {
+  private fun AbstractItemDto.getRefItems() {
     (extends.asSequence() +
         attributes
           .asSequence()
           .flatMap { it.values }
           .mapNotNull { it.terminal })
       .forEach { it.item = get(it.id) }
+
+    attributes
+      .asSequence()
+      .flatMap { it.values }
+      .mapNotNull { it.nested }
+      .forEach { it.getRefItems() }
   }
 
   private fun AbstractItemDto.refreshExtendsOnly(): AbstractItemDto {

@@ -52,6 +52,7 @@ object Lines {
 
   private fun toComponent(node: ItemTreeNode): EditableLine = when (node) {
     is MainItemDtoTreeNode -> MainItemDtoLine(node)
+    is ReferenceItemDtoTreeNode -> ReferenceLine(node)
     is ItemDtoTreeNode -> ItemDtoLine(node)
     is IsTypeNode -> BooleanLine(node)
     is ValueNode -> StringLine(node)
@@ -193,6 +194,21 @@ class ItemNameLine(private val item: ItemTreeNode) : EditableLine() {
   }
 }
 
+class ReferenceLine(private val item: ItemTreeNode): EditableLine() {
+  override fun getElements(editing: Boolean): List<LineElement> {
+    val name = item.getAsPrimitive() as String
+    return if (editing) {
+      val removeButton = Button(Icon(VaadinIcon.CLOSE)) {
+        item.parent!!.remove(item)
+        refreshItem(item.parent, true)
+      }
+      listOf(StringLineElement(name), ComponentLineElement(removeButton))
+    } else {
+      listOf(StringLineElement(name))
+    }
+  }
+}
+
 class ItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
     val name = item.getAsPrimitive() as String
@@ -252,8 +268,16 @@ open class RefLine(private val item: ItemTreeNode) : EditableLine() {
           itemController,
           item.types(),
           settingId
-        ) {
-          item.add(it)
+        ) { selected ->
+          if (itemController.get(selected.id).isAbstract()) {
+            item.createNested().apply {
+              this.name = selected.name
+              this.extends.add(RefDto().also { it.id = selected.id })
+              item.add(this)
+            }
+          } else {
+            item.add(selected)
+          }
           refreshItem(item, true)
         }.open()
       }

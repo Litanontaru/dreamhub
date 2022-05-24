@@ -107,7 +107,7 @@ open class ItemDtoTreeNode(
 class MainItemDtoTreeNode(
   private var itemDto: ItemDto,
   private val itemController: ItemController,
-): ItemDtoTreeNode(itemDto, itemController, null) {
+) : ItemDtoTreeNode(itemDto, itemController, null) {
   override fun children(): List<ItemTreeNode> {
     val children = mutableListOf<ItemTreeNode>()
     children.add(FormulaNode(itemDto, itemController, this))
@@ -135,25 +135,41 @@ class MainItemDtoTreeNode(
     when (node) {
       is MetadataNode -> {
         itemController.removeMetadata(itemDto.id, node.name())
-        itemDto.metadata.removeIf {it.attributeName == node.name()}
+        itemDto.metadata.removeIf { it.attributeName == node.name() }
       }
     }
   }
 }
+
+open class ValueItemDtoTreeNode(
+  itemDto: AbstractItemDto,
+  itemController: ItemController,
+  val index: Int,
+  parent: ItemTreeNode?
+) :
+  ItemDtoTreeNode(itemDto, itemController, parent)
+
+class ReferenceItemDtoTreeNode(
+  itemDto: AbstractItemDto,
+  itemController: ItemController,
+  index: Int,
+  parent: ItemTreeNode?
+) :
+  ValueItemDtoTreeNode(itemDto, itemController, index, parent)
 
 class MetadataNode(
   private val itemDto: ItemDto,
   private var metadataDto: MetadataDto,
   private val itemController: ItemController,
   parent: ItemTreeNode
-): ItemTreeNode(parent) {
+) : ItemTreeNode(parent) {
   override fun name(): String = metadataDto.attributeName
 
   override fun hasChildren(): Boolean = false
 
   override fun children(): List<ItemTreeNode> = listOf()
 
-  override fun count(): Int  = 0
+  override fun count(): Int = 0
 
   override fun getAsPrimitive() = metadataDto
 
@@ -281,7 +297,7 @@ class AllowedExtensionsNode(
 
   override fun types() = listOf(TYPE)
 
-  override fun isSingle(): Boolean  = false
+  override fun isSingle(): Boolean = false
 }
 
 class ItemNameNode(private val itemName: ItemName, parent: ItemTreeNode) : ItemTreeNode(parent) {
@@ -338,9 +354,9 @@ class ItemAttributeNode(
 
   override fun hasChildren() = values.isNotEmpty()
 
-  override fun children(): List<ItemTreeNode> = values.mapNotNull {
-    it.terminal?.item?.let { ItemDtoTreeNode(it, itemController, this) }
-      ?: it.nested?.let { ItemDtoTreeNode(it, itemController, this) }
+  override fun children(): List<ItemTreeNode> = values.withIndex().mapNotNull { value ->
+    value.value.terminal?.item?.let { ReferenceItemDtoTreeNode(it, itemController, value.index, this) }
+      ?: value.value.nested?.let { ValueItemDtoTreeNode(it, itemController, value.index, this) }
   }
 
   override fun count(): Int = values.size
@@ -359,9 +375,12 @@ class ItemAttributeNode(
   }
 
   override fun remove(node: ItemTreeNode) {
-    val indexOf = children().indexOf(node)
-    itemController.removeAttributeValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, indexOf)
-    values.removeAt(indexOf)
+    when(node) {
+      is ValueItemDtoTreeNode -> {
+        itemController.removeAttributeValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, node.index)
+        values.removeAt(node.index)
+      }
+    }
   }
 
   override fun replace(value: ItemName) {

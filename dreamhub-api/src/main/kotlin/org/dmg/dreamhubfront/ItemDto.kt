@@ -127,3 +127,10 @@ fun AbstractItemDto.getMetadata(): Sequence<MetadataDto> =
     .flatMap { it.getMetadata() + it.metadata }
 
 fun AbstractItemDto.allowedExtensions(): List<ItemName> = (listOf(TYPE) + extends.mapNotNull { it.item }.flatMap { it.allowedExtensions() }).distinct()
+
+fun ItemDto.isAbstract(): Boolean = isAbstract(setOf())
+
+fun ItemDto.isAbstract(attributeNames: Set<String>): Boolean =
+  metadata.any { !attributeNames.contains(it.attributeName) } ||
+      (attributeNames + attributes.map { it.name })
+        .let { attributes -> extends.any { it.item?.isAbstract(attributes) ?: false } }
