@@ -42,6 +42,22 @@ class NoneDecimal(type: String) : Decimal(BigDecimal.ZERO, type) {
   override fun div(right: Decimal) = Decimal(BigDecimal("1.0")/ right.value, combineTypes(right))
 }
 
+object NanDecimal: Decimal(BigDecimal.ZERO, "") {
+  override fun unaryMinus() = NanDecimal
+
+  override fun plus(right: Decimal) = NanDecimal
+
+  override fun minus(right: Decimal) = NanDecimal
+
+  override fun times(right: Decimal) = NanDecimal
+
+  override fun div(right: Decimal) = NanDecimal
+
+  override fun compareTo(other: Decimal) = -1
+
+  override fun toString() = "NaN"
+}
+
 fun BigDecimal.toDecimal(): Decimal = Decimal(this, "")
 
 fun Int.toDecimal(): Decimal = this.toBigDecimal().toDecimal()

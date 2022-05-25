@@ -23,7 +23,6 @@ class TypeDto : ItemListDto() {
 abstract class AbstractItemDto : ItemName() {
   var extends: MutableList<RefDto> = mutableListOf()
   var attributes: MutableList<AttributeDto> = mutableListOf()
-  var rate: String = ""
 
   abstract fun nestedId(): Long
 }
@@ -130,6 +129,12 @@ fun AbstractItemDto.getMetadata(): Sequence<MetadataDto> =
     .asSequence()
     .mapNotNull { it.item }
     .flatMap { it.getMetadata() + it.metadata }
+
+fun AbstractItemDto.getAttributes(): Sequence<AttributeDto> =
+  attributes.asSequence() + extends
+    .asSequence()
+    .mapNotNull { it.item }
+    .flatMap { it.attributes }
 
 fun AbstractItemDto.allowedExtensions(): List<ItemName> = (listOf(TYPE) + extends.mapNotNull { it.item }.flatMap { it.allowedExtensions() }).distinct()
 

@@ -3,6 +3,9 @@ package org.dmg.dreamhubfront.page
 import org.dmg.dreamhubfront.*
 import org.dmg.dreamhubfront.StandardTypes.STRING
 import org.dmg.dreamhubfront.StandardTypes.TYPE
+import org.dmg.dreamhubfront.formula.NanDecimal
+import org.dmg.dreamhubfront.formula.formula
+import org.dmg.dreamhubfront.formula.rate
 
 abstract class ItemTreeNode(
   val parent: ItemTreeNode?
@@ -37,9 +40,13 @@ abstract class ItemTreeNode(
   fun compacted(): Sequence<ItemTreeNode> {
     var node = this
     var result = sequenceOf(node)
-    while (node.canCompact()) {
-      node = node.children()[0]
-      result += node
+    while (node.canCompact() && node.hasChildren()) {
+      try {
+        node = node.children()[0]
+        result += node
+      } catch (e: Exception) {
+        println()
+      }
     }
     return result
   }
@@ -54,7 +61,12 @@ abstract class ItemDtoTreeNode(
 
   override fun name() = null
 
-  override fun rate() = itemDto.rate
+  override fun rate() = itemDto.rate()?.let {
+    when (it) {
+      is NanDecimal -> itemDto.formula()
+      else -> it.toString()
+    }
+  }
 
   override fun hasChildren(): Boolean = count() > 0
 
@@ -67,8 +79,20 @@ abstract class ItemDtoTreeNode(
       .getMetadata()
       .forEach {
         when {
-          it.typeId < -1 -> PrimitiveAttributeNode(itemDto, itemController, it, attributeDtoMap[it.attributeName] ?: mutableListOf(), this)
-          else -> ItemAttributeNode(itemDto, itemController, it, attributeDtoMap[it.attributeName] ?: mutableListOf(), this)
+          it.typeId < -1 -> PrimitiveAttributeNode(
+            itemDto,
+            itemController,
+            it,
+            attributeDtoMap[it.attributeName] ?: mutableListOf(),
+            this
+          )
+          else -> ItemAttributeNode(
+            itemDto,
+            itemController,
+            it,
+            attributeDtoMap[it.attributeName] ?: mutableListOf(),
+            this
+          )
         }.let { children.add(it) }
       }
 
@@ -181,8 +205,8 @@ class ReferenceItemDtoTreeNode(
 
   override fun children(): List<ItemTreeNode> = childrenAttributes().let {
     when {
-      itemDto is ItemDto && itemDto.isFinal -> listOf(ExtendsNode(itemDto, itemController, this)) + it
-      else -> it
+      itemDto is ItemDto && itemDto.isFinal -> it
+      else -> listOf(ExtendsNode(itemDto, itemController, this)) + it
     }
   }
 }
@@ -287,14 +311,19 @@ class ExtendsNode(
 ) : ItemTreeNode(parent) {
   override fun name(): String = "Основа"
 
-  override fun hasChildren(): Boolean = itemDto.extends.isNotEmpty()
+  private fun extends() = when (parent) {
+    is MainItemDtoTreeNode -> itemDto.extends.mapNotNull { it.item }
+    else -> itemDto.nonFinalExtends()
+  }
 
-  override fun children(): List<ItemTreeNode> = itemDto
-    .nonFinalExtends()
+  override fun hasChildren(): Boolean = extends().isNotEmpty()
+
+  override fun children(): List<ItemTreeNode> =
+    extends()
     .withIndex()
     .map { ReferenceItemDtoTreeNode(it.value, itemController, it.index, this) }.toList()
 
-  override fun count() = itemDto.nonFinalExtends().count()
+  override fun count() = extends().count()
 
   override fun add(value: ItemName) {
     itemController

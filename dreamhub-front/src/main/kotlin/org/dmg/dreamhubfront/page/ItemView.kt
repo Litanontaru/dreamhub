@@ -9,7 +9,7 @@ class ItemView(
   private val itemController: ItemController,
   private val itemTreeDataProviderService: ItemTreeDataProviderService,
   private val settingId: Long
-): VerticalLayout() {
+) : VerticalLayout() {
   var itemId: Long = -1
     set(value) = setItem(value)
 
@@ -59,6 +59,7 @@ class ItemView(
             it.flexGrow = 1
             it.isAutoWidth = true
           }
+          tree.addColumn { item -> item.compacted().mapNotNull { it.rate() }.filter { it.isNotBlank() }.joinToString() }
 
           tree.setDataProvider(dataProvider)
           tree.expand(dataProvider.root)

@@ -1,8 +1,5 @@
 package org.dmg.dreamhubfront.formula
 
-import org.dmg.dreamhubfront.formula.Formula.toFormula
-import java.math.BigDecimal
-
 interface FNode {
   fun calculate(): Decimal = throw UnsupportedOperationException()
 
@@ -160,22 +157,24 @@ object Formula {
     ?: FNone("")
 }
 
-class Context(map: Map<String, Decimal>) : ((String) -> List<Decimal>) {
+class Context(map: Map<String, () -> List<Decimal>>) : ((String) -> List<Decimal>) {
   private val attributes = map.mapKeys { it.key.uppercase() }
 
   override fun invoke(value: String): List<Decimal> =
     when {
-      value.startsWith("&") -> value.substring(1).let { type -> attributes.values.filter { it.type == type } }
-      else -> attributes[value]?.let { listOf(it) }
+      value.startsWith("&") -> value.substring(1)
+        .let { type -> attributes.values.flatMap { it() }.filter { it.type == type } }
+      else -> attributes[value]?.let { it() }
         ?: value.toBigDecimalOrNull()?.toDecimal()?.let { listOf(it) }
         ?: listOf(NoneDecimal(value))
     }
 }
 
+/*
 fun test() {
-  val x = BigDecimal("2.0").toDecimal()
-  val a = Decimal(BigDecimal("3.0"), "АЭ")
-  val b = Decimal(BigDecimal("4.0"), "АЭ")
+  val x = { BigDecimal("2.0").toDecimal() }
+  val a = { Decimal(BigDecimal("3.0"), "АЭ") }
+  val b = { Decimal(BigDecimal("4.0"), "АЭ") }
 
   listOf(
     "1",
@@ -192,4 +191,4 @@ fun test() {
       val decimal = formula.calculate()
       println(it + " = " + decimal)
     }
-}
+}*/
