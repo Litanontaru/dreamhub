@@ -366,7 +366,12 @@ class ItemAttributeNode(
   override fun add(value: ItemName) {
     when (value) {
       is NestedItemDto -> ValueDto().apply { nested = value }
-      else -> ValueDto().apply { terminal = RefDto().apply { id = value.id } }
+      else -> ValueDto().apply {
+        terminal = RefDto().apply {
+          id = value.id
+          item = itemController.get(id)
+        }
+      }
     }.let {
       itemController
         .addAttributeValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, it)

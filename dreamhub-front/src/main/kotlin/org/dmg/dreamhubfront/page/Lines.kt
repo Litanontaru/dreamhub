@@ -17,7 +17,6 @@ import org.dmg.dreamhubfront.StandardTypes.DECIMAL
 import org.dmg.dreamhubfront.StandardTypes.INT
 import org.dmg.dreamhubfront.StandardTypes.POSITIVE
 import org.dmg.dreamhubfront.StandardTypes.STRING
-import org.dmg.dreamhubfront.formula.Decimal
 import org.dmg.dreamhubfront.formula.toDecimalOrNull
 
 object Lines {
