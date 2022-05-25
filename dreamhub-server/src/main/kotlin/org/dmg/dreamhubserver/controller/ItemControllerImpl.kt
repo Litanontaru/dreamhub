@@ -47,6 +47,10 @@ class ItemControllerImpl(
     service.setIsType(id, newIsType)
   }
 
+  override fun setIsFinal(id: Long, newIsFinal: Boolean) {
+    service.setIsFinal(id, newIsFinal)
+  }
+
   override fun addExtends(id: Long, nestedId: Long, newExtendsId: Long) = service.addExtends(id, nestedId, newExtendsId)
 
   override fun removeExtends(id: Long, nestedId: Long, oldExtendsId: Long) = service.removeExtends(id, nestedId, oldExtendsId)

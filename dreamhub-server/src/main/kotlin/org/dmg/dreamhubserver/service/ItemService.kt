@@ -179,6 +179,10 @@ class ItemService(
     item.isType = newIsType
   }
 
+  fun setIsFinal(id: Long, newIsFinal: Boolean) {
+    itemRepository.findById(id).get().modify { it.isFinal = newIsFinal }
+  }
+
   fun addExtends(id: Long, nestedId: Long, newExtendsId: Long): ItemDto =
     itemRepository
       .findById(id)

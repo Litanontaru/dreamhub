@@ -36,6 +36,7 @@ class ItemDto : AbstractItemDto() {
   var metadata: MutableList<MetadataDto> = mutableListOf()
   var formula: String = ""
   var isType: Boolean = false
+  var isFinal: Boolean = false
 
   override fun nestedId(): Long = -1
 }
@@ -138,3 +139,5 @@ fun ItemDto.isAbstract(attributeNames: Set<String>): Boolean =
   metadata.any { !attributeNames.contains(it.attributeName) } ||
       (attributeNames + attributes.map { it.name })
         .let { attributes -> extends.any { it.item?.isAbstract(attributes) ?: false } }
+
+fun AbstractItemDto.nonFinalExtends() = extends.mapNotNull { it.item }.filter { !it.isFinal }

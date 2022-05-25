@@ -58,7 +58,6 @@ object Lines {
     is MainItemDtoTreeNode -> MainItemDtoLine(node)
     is ReferenceItemDtoTreeNode -> ReferenceLine(node)
     is ItemDtoTreeNode -> ItemDtoLine(node)
-    is IsTypeNode -> BooleanLine(node)
     is ValueNode -> when (node.types().first()) {
       STRING -> StringLine(node)
       POSITIVE -> StringLine(node) { it.toIntOrNull()?.takeIf { it > 0L }?.toString() ?: "" }

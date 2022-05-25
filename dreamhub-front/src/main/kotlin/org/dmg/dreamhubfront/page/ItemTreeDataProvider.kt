@@ -21,11 +21,11 @@ class ItemTreeDataProvider(
   val root = MainItemDtoTreeNode(itemDto, itemController)
 
   override fun getChildCount(query: HierarchicalQuery<ItemTreeNode, Any>?): Int =
-    query?.parent?.count() ?: 1
+    query?.parent?.compacted()?.last()?.count() ?: 1
 
-  override fun hasChildren(node: ItemTreeNode?): Boolean = node?.hasChildren() ?: true
+  override fun hasChildren(node: ItemTreeNode?): Boolean = node?.compacted()?.last()?.hasChildren() ?: true
 
   override fun fetchChildrenFromBackEnd(query: HierarchicalQuery<ItemTreeNode, Any>?): Stream<ItemTreeNode> {
-    return query?.parent?.children()?.stream() ?: Stream.of(root)
+    return query?.parent?.compacted()?.last()?.children()?.stream() ?: Stream.of(root)
   }
 }
