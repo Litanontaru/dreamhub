@@ -88,7 +88,7 @@ class ItemService(
   }
 
   fun add(newItem: ItemDto): ItemDto {
-    removeRefItems(newItem)
+    newItem.removeRefItems()
     val item = Item().apply {
       name = newItem.name
       path = newItem.path
@@ -104,9 +104,9 @@ class ItemService(
     return get(item.id)
   }
 
-  private fun removeRefItems(dto: ItemDto) {
-    (dto.extends.asSequence() +
-        dto.attributes
+  private fun AbstractItemDto.removeRefItems() {
+    (extends.asSequence() +
+        attributes
           .asSequence()
           .flatMap { it.values }
           .mapNotNull { it.terminal })
@@ -118,7 +118,7 @@ class ItemService(
   }
 
   private fun Item.modify(action: (ItemDto) -> Unit) {
-    definition = definition.toDto().also { action(it) }.toJson()
+    definition = definition.toDto().also { action(it) }.apply { removeRefItems() }.toJson()
   }
 
   private fun Item.modify(nestedId: Long, action: (AbstractItemDto) -> Unit): ItemDto {
@@ -133,7 +133,7 @@ class ItemService(
         .mapNotNull { it.nested }
         .find { it.modify(nestedId, action) }
     }
-    definition = root.toJson()
+    definition = root.apply { removeRefItems() }.toJson()
     return root
   }
 
