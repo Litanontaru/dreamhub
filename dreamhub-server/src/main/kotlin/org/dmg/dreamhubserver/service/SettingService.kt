@@ -87,18 +87,14 @@ class SettingService(
 
   //--------------------------------------------------------------------------------------------------------------------
 
-  fun getAllDependencyTypes(settingId: Long): List<TypeDto> =
-    (getDependencies(settingId) + settingId)
-      .let { settingRepository.findAllById(it) }
-      .flatMap { it.allTypeItems.toListDto() }
-
   fun getDependencies(settingId: Long): List<Long> =
-    settingRepository
+    listOf(settingId) + settingRepository
       .findById(settingId)
       .get()
       .dependencies
       .split(",")
       .mapNotNull { it.toLongOrNull() }
+      .flatMap { getDependencies(it) }
 }
 
 fun String.toListDto(): List<TypeDto> = when {
