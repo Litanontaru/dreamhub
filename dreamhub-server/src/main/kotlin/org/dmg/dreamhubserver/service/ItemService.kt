@@ -1,5 +1,6 @@
 package org.dmg.dreamhubserver.service
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.dmg.dreamhubfront.*
 import org.dmg.dreamhubfront.StandardTypes.TYPE
@@ -364,7 +365,9 @@ class ItemService(
   }
 }
 
-private fun String.toDto() = ObjectMapper().readValue(this, ItemDto::class.java)
+private fun String.toDto() = ObjectMapper()
+  .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+  .readValue(this, ItemDto::class.java)
 
 private fun ItemDto.toJson() = ObjectMapper().writeValueAsString(this)
 
