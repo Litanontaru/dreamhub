@@ -157,14 +157,14 @@ object Formula {
     ?: FNone("")
 }
 
-class Context(map: Map<String, () -> List<Decimal>>) : ((String) -> List<Decimal>) {
+class Context(map: Map<String, List<Decimal>>) : ((String) -> List<Decimal>) {
   private val attributes = map.mapKeys { it.key.uppercase() }
 
   override fun invoke(value: String): List<Decimal> =
     when {
       value.startsWith("&") -> value.substring(1)
-        .let { type -> attributes.values.flatMap { it() }.filter { it.type == type } }
-      else -> attributes[value]?.let { it() }
+        .let { type -> attributes.values.flatMap { it }.filter { it.type == type } }
+      else -> attributes[value]
         ?: value.toBigDecimalOrNull()?.toDecimal()?.let { listOf(it) }
         ?: listOf(NoneDecimal(value))
     }

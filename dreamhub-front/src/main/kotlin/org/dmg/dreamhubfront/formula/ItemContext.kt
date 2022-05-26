@@ -8,9 +8,9 @@ fun AbstractItemDto.rate(): Decimal? = formula()?.toFormula(getContext())?.calcu
 fun AbstractItemDto.getContext(): Context =
   getAttributes()
     .groupBy({ it.name }, { it.values })
-    .mapValues { it.value.flatMap { it }.let { value -> { value.map { it.rate() } } } }
+    .mapValues { it.value.flatMap { it }.let { value -> value.map { it.rate() } } }
     .let { attributes ->
-      attributes + getMetadata().map { it.attributeName }.filter { !attributes.containsKey(it) }.map { it to { listOf(NanDecimal) } }
+      attributes + getMetadata().map { it.attributeName }.filter { !attributes.containsKey(it) }.map { it to listOf(NanDecimal) }
     }
     .let { Context(it) }
 
@@ -21,4 +21,4 @@ fun AbstractItemDto.formula(): String? =
   }
     ?: extends.asSequence().mapNotNull { it.item }.mapNotNull { it.formula() }.firstOrNull()
 
-fun ValueDto.rate() = terminal?.item?.rate() ?: nested?.rate() ?: Decimal.NONE
+fun ValueDto.rate() = terminal?.item?.rate() ?: nested?.rate() ?: primitive?.toDecimalOrNull() ?: Decimal.NONE
