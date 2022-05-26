@@ -1,106 +1,71 @@
-[
-  {
-    "id": 1,
-    "name": "Важность",
-    "extends": [],
-    "attributes": [],
-    "formula": "",
-    "rate": "",
-    "isType": true
-  },
-  {
-    "id": 2,
-    "name": "Малую Редко",
-    "extends": [
-      {
-        "id": 1,
-        "name": "Важность"
-      }
-    ],
-    "attributes": [],
-    "formula": "1",
-    "rate": "1",
-    "isType": false
-  },
-  {
-    "id": 3,
-    "name": "Черта",
-    "extends": [],
-    "attributes": [],
-    "formula": "",
-    "rate": "",
-    "isType": true
-  },
-  {
-    "id": 4,
-    "name": "Размер",
-    "extends": [],
-    "attributes": [
-      {
-        "name": "X",
-        "values": ["Int+"]
-      }
-    ],
-    "formula": "18X ПЧ",
-    "rate": "",
-    "isType": false
-  },
-  {
-    "id": 5,
-    "name": "Существо",
-    "extends": [],
-    "attributes": [
-      {
-        "name": "Черты",
-        "values": ["Черта[]"]
-      }
-    ],
-    "formula": "SUM(Черты.ПЧ) / 6",
-    "rate": "",
-    "isType": true
-  },
-  {
-    "id": 6,
-    "name": "Орк",
-    "extends": [
-      {
-        "id": 5,
-        "name": "Существо"
-      }
-    ],
-    "attributes": [
-      {
-        "name": "Черты",
-        "values": [
-          {
-            "name": "Черты",
-            "type": "Черта[]",
-            "ownerId": 5,
-            "values": [
+{
+  "id": 0,
+  "name": "Человек",
+  "extends": [
+    {
+      "id": 18
+    }
+  ],
+  "attributes": [
+    {
+      "name": "Черты",
+      "values": [
+        {
+          "nested": {
+            "id": 49,
+            "name": "Размер",
+            "extends": [
               {
-                "name": "",
-                "extends": [
-                  {
-                    "id": 4,
-                    "name": "Размер"
-                  }
-                ],
-                "attributes": [
-                  {
-                    "name": "X",
-                    "type": "Int+",
-                    "ownerId": 4,
-                    "values": [0]
-                  }
-                ],
-                "formula": "",
-                "rate": "",
-                "isType": false
+                "id": 36
               }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-]
+            ],
+            "attributes": [
+              {
+                "name": "X",
+                "values": [
+                  {
+                    "primitive": "1",
+                    "itemOwnerId": 0
+                  }
+                ]
+              }
+            ],
+            "nestedId": 1
+          },
+          "itemOwnerId": 0
+        },
+        {
+          "nested": {
+            "id": 49,
+            "name": "Естественное оружие",
+            "extends": [
+              {
+                "id": 40
+              }
+            ],
+            "attributes": [
+              {
+                "name": "Оружее",
+                "values": [
+                  {
+                    "terminal": {
+                      "id": 45
+                    },
+                    "itemOwnerId": 0
+                  }
+                ]
+              }
+            ],
+            "nestedId": 2
+          },
+          "itemOwnerId": 0
+        }
+      ]
+    }
+  ],
+  "path": "Существа",
+  "settingId": 34,
+  "nextNestedId": 0,
+  "final": false,
+  "type": false
+}

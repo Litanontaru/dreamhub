@@ -1,7 +1,9 @@
 package org.dmg.dreamhubserver.service
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.*
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.databind.ser.BeanSerializerModifier
 import org.dmg.dreamhubfront.*
 import org.dmg.dreamhubfront.StandardTypes.TYPE
 import org.dmg.dreamhubserver.model.Item
@@ -89,7 +91,6 @@ class ItemService(
   }
 
   fun add(newItem: ItemDto): ItemDto {
-    newItem.removeRefItems()
     val item = Item().apply {
       name = newItem.name
       path = newItem.path
@@ -105,21 +106,12 @@ class ItemService(
     return get(item.id)
   }
 
-  private fun AbstractItemDto.removeRefItems() {
-    (extends.asSequence() +
-        attributes
-          .asSequence()
-          .flatMap { it.values }
-          .mapNotNull { it.terminal })
-      .forEach { it.item = null }
-  }
-
   fun remove(id: Long) {
     itemRepository.deleteById(id)
   }
 
   private fun Item.modify(action: (ItemDto) -> Unit) {
-    definition = definition.toDto().also { action(it) }.apply { removeRefItems() }.toJson()
+    definition = definition.toDto().also { action(it) }.toJson()
   }
 
   private fun Item.modify(nestedId: Long, action: (AbstractItemDto) -> Unit): ItemDto {
@@ -134,7 +126,7 @@ class ItemService(
         .mapNotNull { it.nested }
         .find { it.modify(nestedId, action) }
     }
-    definition = root.apply { removeRefItems() }.toJson()
+    definition = root.toJson()
     return root
   }
 
@@ -369,7 +361,7 @@ private fun String.toDto() = ObjectMapper()
   .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   .readValue(this, ItemDto::class.java)
 
-private fun ItemDto.toJson() = ObjectMapper().writeValueAsString(this)
+private fun ItemDto.toJson() = mapper.writeValueAsString(this)
 
 fun ItemList.toDto(): ItemListDto = ItemListDto().also {
   it.id = getId()
@@ -384,4 +376,22 @@ fun ItemListWithExtends.toDto() = TypeDto().apply {
   path = getPath()
   settingId = getSettingId()
   superTypeIds = getExtends().split(",").mapNotNull { it.toLongOrNull() }
+}
+
+val mapper = ObjectMapper().apply {
+  setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+  registerModule(object : SimpleModule() {
+    override fun setupModule(context: SetupContext) {
+      super.setupModule(context)
+
+      context.addBeanSerializerModifier(object : BeanSerializerModifier() {
+        override fun modifySerializer(config: SerializationConfig, desc: BeanDescription, serializer: JsonSerializer<*>): JsonSerializer<*> {
+          return when {
+            RefDto::class.java.isAssignableFrom(desc.getBeanClass()) -> RefDtoSerializer(serializer as JsonSerializer<Any?>)
+            else -> serializer
+          }
+        }
+      });
+    }
+  })
 }
