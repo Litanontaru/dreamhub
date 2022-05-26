@@ -3,12 +3,7 @@ package org.dmg.dreamhubfront.formula
 import org.dmg.dreamhubfront.*
 import org.dmg.dreamhubfront.formula.Formula.toFormula
 
-fun AbstractItemDto.rate(): Decimal? {
-  val f = formula()
-  val context = getContext()
-  val ff = f?.toFormula(context)
-  return ff?.calculate()
-}
+fun AbstractItemDto.rate(): Decimal? = formula()?.toFormula(getContext())?.calculate()
 
 fun AbstractItemDto.getContext(): Context =
   getAttributes()
