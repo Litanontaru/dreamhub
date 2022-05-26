@@ -25,20 +25,39 @@ class ItemsTreeDataProvider(
     tree = readTree()
   }
 
-  private fun readTree(): MutableMap<ItemListView, MutableList<ItemListView>> {
-    val terminals = itemController.getAll(settingId, null, null)
-      .groupBy { it.path }
-      .mapValues { it.value.map { it.toTerminal() }.sortedBy { it.name } }
-    val folders = terminals.keys
-      .map { it.toFolder() }
-      .filter { it.name.isNotBlank() }
-      .groupBy { it.path }
-    return (folders.asSequence() + terminals.asSequence())
-      .groupBy { it.key }
-      .mapValues { it.value.flatMap { it.value }.toMutableList() }
-      .mapKeys { it.key.toFolder() }
+  private fun readTree(): MutableMap<ItemListView, MutableList<ItemListView>> =
+    itemController.getAll(settingId, null, null)
+      .flatMap {
+        (listOf("") + it.path.split(".") + it).let { parts ->
+          (1 until parts.size)
+            .map { 0..it }
+            .map { it.map { parts[it] } }
+            .map { part ->
+              val path = part.take(part.size - 1).map { it as String }.filter { it.isNotBlank() }.joinToString(".")
+              val element = when (part.last()) {
+                is String -> part.map { it as String }.filter { it.isNotBlank() }.joinToString(".")
+                is ItemListDto -> part.last()
+                else -> throw IllegalStateException()
+              }
+              path to element
+            }
+        }
+      }
+      .distinct()
+      .groupBy({ it.first.toFolder() }, { it.second })
+      .mapValues {
+        it
+          .value
+          .map {
+            when (it) {
+              is String -> it.toFolder()
+              is ItemListDto -> it.toTerminal()
+              else -> throw IllegalStateException()
+            }
+          }
+          .toMutableList()
+      }
       .toMutableMap()
-  }
 
   override fun refreshAll() {
     tree = readTree()
@@ -74,7 +93,7 @@ class ItemsTreeDataProvider(
       .map { it[0] to it[1] }
       .filter { (parent, child) ->
         tree[parent]
-          ?. let {
+          ?.let {
             val added = !it.contains(child)
             if (added) {
               it.add(child)
@@ -86,7 +105,7 @@ class ItemsTreeDataProvider(
             true
           }
       }
-      .forEach { this.refreshItem(it.first,  true) }
+      .forEach { this.refreshItem(it.first, true) }
   }
 }
 
@@ -98,7 +117,7 @@ data class ItemListView(val name: String, val path: String, val item: ItemListDt
 fun String.toFolder(): ItemListView =
   when (val index = lastIndexOf(".")) {
     -1 -> ItemListView(this, "")
-    else -> ItemListView(substring(index + 1), substring(0, index - 1))
+    else -> ItemListView(substring(index + 1), substring(0, index))
   }
 
 fun ItemListDto.toTerminal(): ItemListView = ItemListView(name, path, this)

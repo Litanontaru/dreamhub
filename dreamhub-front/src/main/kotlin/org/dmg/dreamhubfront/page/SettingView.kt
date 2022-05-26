@@ -71,7 +71,10 @@ class SettingView(
               itemController.add(ItemDto().also {
                 it.name = fullName.substring(fullName.lastIndexOf('.') + 1)
                 it.settingId = settingId
-                it.path = fullName.substring(0, fullName.lastIndexOf('.'))
+                it.path = when {
+                  fullName.lastIndexOf('.') > 0 -> fullName.substring(0, fullName.lastIndexOf('.'))
+                  else -> ""
+                }
               }).also {
                 dataProvider.add(it.toListDto())
                 dataProvider.refreshAll()
