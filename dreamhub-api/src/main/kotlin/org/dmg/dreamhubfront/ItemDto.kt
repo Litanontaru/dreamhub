@@ -141,7 +141,7 @@ fun AbstractItemDto.allowedExtensions(): List<ItemName> = (listOf(TYPE) + extend
 fun ItemDto.isAbstract(): Boolean = isAbstract(setOf())
 
 fun ItemDto.isAbstract(attributeNames: Set<String>): Boolean =
-  metadata.any { !attributeNames.contains(it.attributeName) } ||
+  metadata.filter { it.isSingle }.any { !attributeNames.contains(it.attributeName) } ||
       (attributeNames + attributes.map { it.name })
         .let { attributes -> extends.any { it.item?.isAbstract(attributes) ?: false } }
 
