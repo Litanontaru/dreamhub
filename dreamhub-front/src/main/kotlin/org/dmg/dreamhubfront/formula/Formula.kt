@@ -18,8 +18,14 @@ interface FNode {
   }
 }
 
-class FVar(private val value: () -> Decimal) : FNode {
-  override fun calculate() = value()
+class FConst(private val value: Decimal) : FNode {
+  override fun calculate() = value
+}
+
+class FVar(private val value: () -> List<Decimal>) : FAbstractNodeList {
+  override fun calculate() = value().first()
+
+  override fun values(): List<FNode> = value().map { FConst(it) }
 }
 
 class FNegate(private val value: FNode) : FNode {
@@ -55,6 +61,11 @@ class FNone(val type: String) : FNode {
 
   override fun minus(right: FNode): FNode = throw UnsupportedOperationException()
 
+  override fun times(right: FNode): FNode = when (type) {
+    "" -> right
+    else -> super.times(right)
+  }
+
   override fun div(right: FNode): FNode = throw UnsupportedOperationException()
 }
 
@@ -82,14 +93,6 @@ class FNodeList(val values: List<FNode>) : FAbstractNodeList {
   override fun values(): List<FNode> = values
 
   override fun and(right: FNode): FNode = FNodeList(values + right)
-}
-
-class FTypeList(val byType: () -> List<Decimal>) : FAbstractNodeList {
-  override fun values(): List<FNode> = byType().map {
-    object : FNode {
-      override fun calculate() = it
-    }
-  }
 }
 
 object Formula {
@@ -133,8 +136,8 @@ object Formula {
           "COUNT" -> result = action(result, parse(1).count())
           "(" -> result = action(result, parse())
           else -> result = when {
-            part.startsWith("&") -> FTypeList { context(part) }
-            else -> action(result, FVar { context(part).first() })
+            part.startsWith("&") -> FVar { context(part) }
+            else -> action(result, FVar { context(part) })
           }
         }
 
