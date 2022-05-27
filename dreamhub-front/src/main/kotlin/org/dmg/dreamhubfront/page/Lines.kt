@@ -59,10 +59,10 @@ object Lines {
     is ReferenceItemDtoTreeNode -> ReferenceLine(node)
     is ItemDtoTreeNode -> ItemDtoLine(node)
     is ValueNode -> when (node.types().first()) {
-      STRING -> StringLine(node)
-      POSITIVE -> StringLine(node) { it.toIntOrNull()?.takeIf { it > 0L }?.toString() ?: "" }
-      INT -> StringLine(node) { it.toIntOrNull()?.toString() ?: "" }
-      DECIMAL -> StringLine(node) { it.toDecimalOrNull()?.toString() ?: "" }
+      STRING -> StringLine(node, "25em")
+      POSITIVE -> StringLine(node, "25em") { it.toIntOrNull()?.takeIf { it > 0L }?.toString() ?: "" }
+      INT -> StringLine(node, "25em") { it.toIntOrNull()?.toString() ?: "" }
+      DECIMAL -> StringLine(node, "25em") { it.toDecimalOrNull()?.toString() ?: "" }
       BOOLEAN -> BooleanLine(node)
       else -> throw UnsupportedOperationException("Unknown type ${node.types().first()}")
     }
@@ -111,12 +111,13 @@ open class EditableLine {
   open fun getElements(editing: Boolean): List<LineElement> = listOf()
 }
 
-class StringLine(private val item: ItemTreeNode, private val validator: (String) -> String = { it }) : EditableLine() {
+class StringLine(private val item: ItemTreeNode, private val editWidth: String, private val validator: (String) -> String = { it }) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
     val initial = (item.getAsPrimitive() as String?) ?: ""
     return if (editing) {
       val editField = TextField().apply {
         value = initial
+        width = editWidth
 
         addValueChangeListener { item.setAsPrimitive(validator(it.value)) }
       }
