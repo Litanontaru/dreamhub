@@ -79,20 +79,8 @@ abstract class ItemDtoTreeNode(
       .getMetadata()
       .forEach {
         when {
-          it.typeId < -1 -> PrimitiveAttributeNode(
-            itemDto,
-            itemController,
-            it,
-            attributeDtoMap[it.attributeName] ?: mutableListOf(),
-            this
-          )
-          else -> ItemAttributeNode(
-            itemDto,
-            itemController,
-            it,
-            attributeDtoMap[it.attributeName] ?: mutableListOf(),
-            this
-          )
+          it.typeId < -1 -> PrimitiveAttributeNode(itemDto, itemController, it, attributeDtoMap[it.attributeName] ?: mutableListOf(), this)
+          else -> ItemAttributeNode(itemDto, itemController, it, attributeDtoMap[it.attributeName] ?: mutableListOf(), this)
         }.let { children.add(it) }
       }
 
@@ -133,22 +121,17 @@ class MainItemDtoTreeNode(
   private var itemDto: ItemDto,
   private val itemController: ItemController,
 ) : ItemDtoTreeNode(itemDto, itemController, null) {
-  override fun children(): List<ItemTreeNode> {
-    val children = mutableListOf<ItemTreeNode>()
-    children.add(FormulaNode(itemDto, itemController, this))
-    children.add(IsTypeNode(itemDto, itemController, this))
-    children.add(IsFinalNode(itemDto, itemController, this))
-    children.add(AllowedExtensionsNode(itemDto, itemController, this))
-    children.add(ExtendsNode(itemDto, itemController, this))
 
-    children += childrenAttributes()
-
-    itemDto.metadata.forEach {
-      children.add(MetadataNode(itemDto, it, itemController, this))
-    }
-
-    return children
-  }
+  override fun children(): List<ItemTreeNode> =
+    mutableListOf(
+      FormulaNode(itemDto, itemController, this),
+      IsTypeNode(itemDto, itemController, this),
+      IsFinalNode(itemDto, itemController, this),
+      AllowedExtensionsNode(itemDto, itemController, this),
+      ExtendsNode(itemDto, itemController, this)
+    ) +
+        childrenAttributes() +
+        itemDto.metadata.map { MetadataNode(itemDto, it, itemController, this) }
 
   override fun count(): Int = 5 + attributesCount() + itemDto.metadata.size
 
@@ -320,8 +303,8 @@ class ExtendsNode(
 
   override fun children(): List<ItemTreeNode> =
     extends()
-    .withIndex()
-    .map { ReferenceItemDtoTreeNode(it.value, itemController, it.index, this) }.toList()
+      .withIndex()
+      .map { ReferenceItemDtoTreeNode(it.value, itemController, it.index, this) }.toList()
 
   override fun count() = extends().count()
 
