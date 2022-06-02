@@ -96,7 +96,7 @@ class FNodeList(val values: List<FNode>) : FAbstractNodeList {
 }
 
 object Formula {
-  private val PATTERN = "[+-]?([0-9]*[.])?[0-9]+|\\(|\\)|,|\\+|-|\\*|/|&?([A-Za-z])+|&?([ЁёА-я])+".toRegex()
+  private val PATTERN = "[+-]?([0-9]*[.])?[0-9]+|\\(|\\)|,|\\+|-|\\*|/|&?([A-Za-z_])+|&?([ЁёА-я_])+|&?\"([A-Za-z _])+\"|&?\"([ЁёА-я _])+\"".toRegex()
 
   operator fun invoke(value: String, context: (String) -> List<Decimal>): FNode {
     if (value.isBlank()) {
@@ -165,12 +165,26 @@ class Context(map: Map<String, List<Decimal>>) : ((String) -> List<Decimal>) {
 
   override fun invoke(value: String): List<Decimal> =
     when {
-      value.startsWith("&") -> value.substring(1)
-        .let { type -> attributes.values.flatMap { it }.filter { it.type == type } }
-      else -> attributes[value]
-        ?: value.toBigDecimalOrNull()?.toDecimal()?.let { listOf(it) }
-        ?: listOf(NoneDecimal(value))
+      value == "_" -> attributes.values.flatten()
+      value.startsWith("&") ->
+        value
+          .substring(1)
+          .stripQuotation()
+          .let { type -> attributes.values.flatMap { it }.filter { it.type == type } }
+      else ->
+        value
+          .stripQuotation()
+          .let {
+            attributes[it]
+              ?: it.toBigDecimalOrNull()?.toDecimal()?.let { listOf(it) }
+              ?: listOf(NoneDecimal(it))
+          }
     }
+
+  private fun String.stripQuotation() = when {
+    startsWith("\"") -> substring(1, length - 1)
+    else -> this
+  }
 }
 
 /*
