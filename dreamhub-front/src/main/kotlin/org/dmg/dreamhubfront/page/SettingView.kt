@@ -14,12 +14,14 @@ import com.vaadin.flow.router.Route
 import org.dmg.dreamhubfront.ItemController
 import org.dmg.dreamhubfront.ItemDto
 import org.dmg.dreamhubfront.ItemListDto
+import org.dmg.dreamhubfront.feign.CachedItemApi
 import javax.annotation.security.PermitAll
 
 @Route("settings/:settingId/:itemId")
 @PermitAll
 class SettingView(
   private val itemController: ItemController,
+  private val cachedItemApi: CachedItemApi,
   private val itemsTreeDataProviderService: ItemsTreeDataProviderService,
   private val itemTreeDataProviderService: ItemTreeDataProviderService
 ) : HorizontalLayout(), BeforeEnterObserver {
@@ -40,7 +42,7 @@ class SettingView(
 
   private fun set(settingId: Long) {
     if (settingId != this.settingId) {
-      val view = ItemView(itemController, itemTreeDataProviderService, settingId)
+      val view = ItemView(itemController, cachedItemApi, itemTreeDataProviderService, settingId)
 
       val dataProvider = itemsTreeDataProviderService(settingId)
 

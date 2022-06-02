@@ -17,6 +17,7 @@ import org.dmg.dreamhubfront.StandardTypes.DECIMAL
 import org.dmg.dreamhubfront.StandardTypes.INT
 import org.dmg.dreamhubfront.StandardTypes.POSITIVE
 import org.dmg.dreamhubfront.StandardTypes.STRING
+import org.dmg.dreamhubfront.feign.CachedItemApi
 import org.dmg.dreamhubfront.formula.toDecimalOrNull
 
 object Lines {
@@ -24,6 +25,7 @@ object Lines {
     item: ItemTreeNode,
     editing: Boolean,
     itemController: ItemController,
+    cachedItemApi: CachedItemApi,
     settingId: Long,
     refreshItem: (ItemTreeNode, Boolean) -> Unit
   ): HorizontalLayout = item
@@ -32,6 +34,7 @@ object Lines {
     .map {
       toComponent(it).also {
         it.itemController = itemController
+        it.cachedItemApi = cachedItemApi
         it.settingId = settingId
         it.refreshItem = refreshItem
       }
@@ -106,6 +109,7 @@ class StringLineElement(private val value: String) : LineElement {
 open class EditableLine {
   var settingId: Long = -1
   lateinit var itemController: ItemController
+  lateinit var cachedItemApi: CachedItemApi
   lateinit var refreshItem: (ItemTreeNode, Boolean) -> Unit
 
   open fun getElements(editing: Boolean): List<LineElement> = listOf()
@@ -148,7 +152,7 @@ class BooleanLine(private val item: ValueNode) : EditableLine() {
 
 class MetadataLine(private val item: MetadataNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
-    val names = (itemController.getAllTypes(settingId) + StandardTypes.ALL)
+    val names = (cachedItemApi.getAllTypes(settingId) + StandardTypes.ALL)
       .associate { it.id to it.name }
 
     return if (editing) {
