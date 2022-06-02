@@ -42,6 +42,7 @@ class ItemService(
       }
       .distinctBy { it.getId() }
       .map { it.toDto() }
+      .sortedBy { it.name }
 
   fun getAllTypes(settingId: Long): List<TypeDto> = getAllTypeList(settingId).map { it.toDto() }
 
