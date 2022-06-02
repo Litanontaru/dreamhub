@@ -7,19 +7,19 @@ import com.vaadin.flow.component.grid.GridVariant
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.TextField
-import org.dmg.dreamhubfront.ItemController
 import org.dmg.dreamhubfront.ItemListDto
 import org.dmg.dreamhubfront.ItemName
+import org.dmg.dreamhubfront.feign.ItemApi
 
 class OptionSelection(
-  private val itemController: ItemController,
+  private val itemApi: ItemApi,
   private val types: List<ItemName>,
   private val settingId: Long,
   private val onSelect: (ItemListDto) -> Unit
 ) : Dialog() {
   init {
     add(VerticalLayout().apply {
-      val items = itemController.getSubItems(settingId, types.map { it.id })
+      val items = itemApi.getSubItems(settingId, types.map { it.id })
 
       val filter = TextField().apply {
         width = "100%"

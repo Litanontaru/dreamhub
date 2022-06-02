@@ -3,12 +3,10 @@ package org.dmg.dreamhubfront.page
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.treegrid.TreeGrid
-import org.dmg.dreamhubfront.ItemController
-import org.dmg.dreamhubfront.feign.CachedItemApi
+import org.dmg.dreamhubfront.feign.ItemApi
 
 class ItemView(
-  private val itemController: ItemController,
-  private val cachedItemApi: CachedItemApi,
+  private val itemApi: ItemApi,
   private val itemTreeDataProviderService: ItemTreeDataProviderService,
   private val settingId: Long
 ) : VerticalLayout() {
@@ -29,7 +27,7 @@ class ItemView(
       } else {
         isVisible = true
       }
-      var item = itemController.get(itemId)
+      var item = itemApi.get(itemId)
 
       add(HorizontalLayout().apply {
         TreeGrid<ItemTreeNode>().also { tree ->
@@ -53,7 +51,7 @@ class ItemView(
           tree.addSelectionListener { updateSelection(it.firstSelectedItem.orElse(null)) }
 
           tree.addComponentHierarchyColumn { item ->
-            Lines.toComponent(item, item == selectedItem, itemController, cachedItemApi, settingId) { node, refreshChildren ->
+            Lines.toComponent(item, item == selectedItem, itemApi, settingId) { node, refreshChildren ->
               dataProvider.refreshItem(node, refreshChildren)
             }
           }.also {

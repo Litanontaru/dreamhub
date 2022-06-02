@@ -2,23 +2,23 @@ package org.dmg.dreamhubfront.page
 
 import com.vaadin.flow.data.provider.hierarchy.AbstractBackEndHierarchicalDataProvider
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalQuery
-import org.dmg.dreamhubfront.ItemController
 import org.dmg.dreamhubfront.ItemDto
+import org.dmg.dreamhubfront.feign.ItemApi
 import org.springframework.stereotype.Service
 import java.util.stream.Stream
 
 @Service
 class ItemTreeDataProviderService(
-  private val itemController: ItemController
+  private val itemApi: ItemApi
 ) {
-  operator fun invoke(itemDto: ItemDto): ItemTreeDataProvider = ItemTreeDataProvider(itemDto, itemController)
+  operator fun invoke(itemDto: ItemDto): ItemTreeDataProvider = ItemTreeDataProvider(itemDto, itemApi)
 }
 
 class ItemTreeDataProvider(
   itemDto: ItemDto,
-  itemController: ItemController
+  itemApi: ItemApi
 ): AbstractBackEndHierarchicalDataProvider<ItemTreeNode, Any>() {
-  val root = MainItemDtoTreeNode(itemDto, itemController)
+  val root = MainItemDtoTreeNode(itemDto, itemApi)
 
   override fun getChildCount(query: HierarchicalQuery<ItemTreeNode, Any>?): Int =
     query?.parent?.compacted()?.last()?.count() ?: 1

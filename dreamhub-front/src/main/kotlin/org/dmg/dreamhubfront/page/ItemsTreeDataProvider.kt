@@ -2,20 +2,20 @@ package org.dmg.dreamhubfront.page
 
 import com.vaadin.flow.data.provider.hierarchy.AbstractBackEndHierarchicalDataProvider
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalQuery
-import org.dmg.dreamhubfront.ItemController
 import org.dmg.dreamhubfront.ItemListDto
+import org.dmg.dreamhubfront.feign.ItemApi
 import org.springframework.stereotype.Service
 import java.util.stream.Stream
 
 @Service
 class ItemsTreeDataProviderService(
-  private val itemController: ItemController
+  private val itemApi: ItemApi
 ) {
-  operator fun invoke(settingId: Long): ItemsTreeDataProvider = ItemsTreeDataProvider(itemController, settingId)
+  operator fun invoke(settingId: Long): ItemsTreeDataProvider = ItemsTreeDataProvider(itemApi, settingId)
 }
 
 class ItemsTreeDataProvider(
-  private val itemController: ItemController,
+  private val itemApi: ItemApi,
   private val settingId: Long
 ) : AbstractBackEndHierarchicalDataProvider<ItemListView, Any>() {
   private val root = "".toFolder()
@@ -26,7 +26,7 @@ class ItemsTreeDataProvider(
   }
 
   private fun readTree(): MutableMap<ItemListView, MutableList<ItemListView>> =
-    itemController.getAll(settingId, null, null)
+    itemApi.getAll(settingId, null, null)
       .flatMap {
         (listOf("") + it.path.split(".") + it).let { parts ->
           (1 until parts.size)

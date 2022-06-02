@@ -17,15 +17,14 @@ import org.dmg.dreamhubfront.StandardTypes.DECIMAL
 import org.dmg.dreamhubfront.StandardTypes.INT
 import org.dmg.dreamhubfront.StandardTypes.POSITIVE
 import org.dmg.dreamhubfront.StandardTypes.STRING
-import org.dmg.dreamhubfront.feign.CachedItemApi
+import org.dmg.dreamhubfront.feign.ItemApi
 import org.dmg.dreamhubfront.formula.toDecimalOrNull
 
 object Lines {
   fun toComponent(
     item: ItemTreeNode,
     editing: Boolean,
-    itemController: ItemController,
-    cachedItemApi: CachedItemApi,
+    itemApi: ItemApi,
     settingId: Long,
     refreshItem: (ItemTreeNode, Boolean) -> Unit
   ): HorizontalLayout = item
@@ -33,8 +32,8 @@ object Lines {
     .toList()
     .map {
       toComponent(it).also {
-        it.itemController = itemController
-        it.cachedItemApi = cachedItemApi
+        it.itemApi = itemApi
+        it.itemApi = itemApi
         it.settingId = settingId
         it.refreshItem = refreshItem
       }
@@ -108,8 +107,7 @@ class StringLineElement(private val value: String) : LineElement {
 
 open class EditableLine {
   var settingId: Long = -1
-  lateinit var itemController: ItemController
-  lateinit var cachedItemApi: CachedItemApi
+  lateinit var itemApi: ItemApi
   lateinit var refreshItem: (ItemTreeNode, Boolean) -> Unit
 
   open fun getElements(editing: Boolean): List<LineElement> = listOf()
@@ -152,7 +150,7 @@ class BooleanLine(private val item: ValueNode) : EditableLine() {
 
 class MetadataLine(private val item: MetadataNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
-    val names = (cachedItemApi.getAllTypes(settingId) + StandardTypes.ALL)
+    val names = (this.itemApi.getAllTypes(settingId) + StandardTypes.ALL)
       .associate { it.id to it.name }
 
     return if (editing) {
@@ -280,7 +278,7 @@ open class RefLine(private val item: ItemTreeNode) : EditableLine() {
     return if (editing && canAdd()) {
       val addButton = Button(Icon(VaadinIcon.PLUS)) {
         OptionSelection(
-          itemController,
+          itemApi,
           item.types(),
           settingId
         ) {

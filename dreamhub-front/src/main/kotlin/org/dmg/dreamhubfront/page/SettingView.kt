@@ -11,17 +11,15 @@ import com.vaadin.flow.function.SerializablePredicate
 import com.vaadin.flow.router.BeforeEnterEvent
 import com.vaadin.flow.router.BeforeEnterObserver
 import com.vaadin.flow.router.Route
-import org.dmg.dreamhubfront.ItemController
 import org.dmg.dreamhubfront.ItemDto
 import org.dmg.dreamhubfront.ItemListDto
-import org.dmg.dreamhubfront.feign.CachedItemApi
+import org.dmg.dreamhubfront.feign.ItemApi
 import javax.annotation.security.PermitAll
 
 @Route("settings/:settingId/:itemId")
 @PermitAll
 class SettingView(
-  private val itemController: ItemController,
-  private val cachedItemApi: CachedItemApi,
+  private val itemApi: ItemApi,
   private val itemsTreeDataProviderService: ItemsTreeDataProviderService,
   private val itemTreeDataProviderService: ItemTreeDataProviderService
 ) : HorizontalLayout(), BeforeEnterObserver {
@@ -42,7 +40,7 @@ class SettingView(
 
   private fun set(settingId: Long) {
     if (settingId != this.settingId) {
-      val view = ItemView(itemController, cachedItemApi, itemTreeDataProviderService, settingId)
+      val view = ItemView(itemApi, itemTreeDataProviderService, settingId)
 
       val dataProvider = itemsTreeDataProviderService(settingId)
 
@@ -70,7 +68,7 @@ class SettingView(
             val template = if (path.isBlank()) "" else "$path."
 
             EditDialog("Название", template) { fullName ->
-              itemController.add(ItemDto().also {
+              itemApi.add(ItemDto().also {
                 it.name = fullName.substring(fullName.lastIndexOf('.') + 1)
                 it.settingId = settingId
                 it.path = when {
@@ -89,7 +87,7 @@ class SettingView(
             if (item.isFolder) {
               //todo
             } else {
-              itemController.remove(item.item!!.id)
+              itemApi.remove(item.item!!.id)
               dataProvider.refreshAll()
             }
           }
@@ -98,7 +96,7 @@ class SettingView(
             val item = it.item.get()
             EditDialog("Путь", item.path) { newPath ->
               item.item?.let {
-                itemController.setPath(it.id, newPath)
+                itemApi.setPath(it.id, newPath)
                 it.path = newPath
                 dataProvider.refreshAll()
               }

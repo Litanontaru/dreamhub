@@ -56,6 +56,7 @@ class MetadataDto {
   var typeId: Long = -1
   var isSingle: Boolean = false
   var allowCreate: Boolean = false
+  var isRequired: Boolean = false
 
   fun toItemName() = ItemName().also { it.id = typeId }
 }
