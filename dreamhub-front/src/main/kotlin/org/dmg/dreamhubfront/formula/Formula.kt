@@ -16,6 +16,12 @@ interface FNode {
   fun count(): FNode = object : FNode {
     override fun calculate(): Decimal = Decimal.ONE
   }
+  fun prod(): FNode = this
+  fun sumto(): FNode = this
+}
+
+class FCalculator(private val calculator: () -> Decimal): FNode {
+  override fun calculate(): Decimal = calculator()
 }
 
 class FConst(private val value: Decimal) : FNode {
@@ -72,21 +78,17 @@ class FNone(val type: String) : FNode {
 interface FAbstractNodeList : FNode {
   fun values(): List<FNode>
 
-  override fun min(): FNode = object : FNode {
-    override fun calculate(): Decimal = values().map { it.calculate() }.min()
-  }
+  override fun min(): FNode = FCalculator { values().map { it.calculate() }.min() }
 
-  override fun max(): FNode = object : FNode {
-    override fun calculate(): Decimal = values().map { it.calculate() }.max()
-  }
+  override fun max(): FNode = FCalculator { values().map { it.calculate() }.max() }
 
-  override fun sum(): FNode = object : FNode {
-    override fun calculate(): Decimal = values().map { it.calculate() }.sum()
-  }
+  override fun sum(): FNode = FCalculator { values().map { it.calculate() }.sum() }
 
-  override fun count(): FNode = object : FNode {
-    override fun calculate(): Decimal = values().size.toDecimal()
-  }
+  override fun count(): FNode = FCalculator { values().size.toDecimal() }
+
+  override fun prod(): FNode = FCalculator { values().map { it.calculate() }.prod() }
+
+  override fun sumto(): FNode = FCalculator { values().map { it.calculate() }.sorted().sumto() }
 }
 
 class FNodeList(val values: List<FNode>) : FAbstractNodeList {
@@ -134,6 +136,8 @@ object Formula {
           "MAX" -> result = action(result, parse(1).max())
           "SUM" -> result = action(result, parse(1).sum())
           "COUNT" -> result = action(result, parse(1).count())
+          "PROD" -> result = action(result, parse(1).prod())
+          "SUMTO" -> result = action(result, parse(1).sumto())
           "(" -> result = action(result, parse())
           else -> result = when {
             part.startsWith("&") -> FVar { context(part) }

@@ -1,5 +1,8 @@
 package org.dmg.dreamhubfront.formula
 
+import org.dmg.dreamhubfront.formula.Decimal.Companion.NONE
+import org.dmg.dreamhubfront.formula.Decimal.Companion.ONE
+import org.dmg.dreamhubfront.formula.Decimal.Companion.TWO
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -28,6 +31,7 @@ open class Decimal(val value: BigDecimal, val type: String) : Comparable<Decimal
     val NONE = NoneDecimal("")
     val ZERO = Decimal(BigDecimal.ZERO, "")
     val ONE = Decimal(BigDecimal.ONE, "")
+    val TWO = Decimal("2.0".toBigDecimal(), "")
   }
 }
 
@@ -62,7 +66,11 @@ fun BigDecimal.toDecimal(): Decimal = Decimal(this, "")
 
 fun Int.toDecimal(): Decimal = this.toBigDecimal().toDecimal()
 
-fun Iterable<Decimal>.sum() = fold<Decimal, Decimal>(Decimal.NONE, { a, b -> a + b })
+fun Iterable<Decimal>.sum() = fold<Decimal, Decimal>(NONE, { a, b -> a + b })
+
+fun Iterable<Decimal>.sumto() = fold<Decimal, Decimal>(NONE, { a, b -> a / TWO + b })
+
+fun Iterable<Decimal>.prod() = fold(ONE, { a, b -> a * b })
 
 fun String.toDecimalOrNull(): Decimal? =
   takeIf { it.isNotBlank() }
