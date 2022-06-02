@@ -179,12 +179,19 @@ class MetadataLine(private val item: MetadataNode) : EditableLine() {
           item.setAsPrimitive(item.getAsPrimitive().apply { allowCreate = it.value })
         }
       }
+      val isRequired = Checkbox("Обязательное").apply {
+        value = item.getAsPrimitive().isRequired
+
+        addValueChangeListener {
+          item.setAsPrimitive(item.getAsPrimitive().apply { isRequired = it.value })
+        }
+      }
       val removeButton = Button(Icon(VaadinIcon.CLOSE)) {
         item.parent!!.remove(item)
         refreshItem(item.parent, true)
       }
 
-      listOf(StringLineElement(item.name()), ComponentLineElement(editType, isSingle, allowCreate, removeButton))
+      listOf(StringLineElement(item.name()), ComponentLineElement(editType, isSingle, allowCreate, isRequired, removeButton))
     } else {
       names[item.getAsPrimitive().typeId]
         ?.let { listOf(StringLineElement("${item.name()}: $it")) }

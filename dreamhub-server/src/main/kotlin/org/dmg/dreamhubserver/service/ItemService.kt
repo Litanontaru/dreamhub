@@ -250,6 +250,7 @@ class ItemService(
           it.typeId = newMetadata.typeId
           it.isSingle = newMetadata.isSingle
           it.allowCreate = newMetadata.allowCreate
+          it.isRequired = newMetadata.isRequired
         }
       }
   }
