@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ser.BeanSerializerModifier
 import org.dmg.dreamhubfront.*
 import org.dmg.dreamhubfront.StandardTypes.TYPE
 import org.dmg.dreamhubserver.model.Item
-import org.dmg.dreamhubserver.model.ItemIndex
 import org.dmg.dreamhubserver.repository.ItemIndexRepository
 import org.dmg.dreamhubserver.repository.ItemList
 import org.dmg.dreamhubserver.repository.ItemListWithExtends
@@ -18,7 +17,8 @@ import org.springframework.stereotype.Service
 class ItemService(
   private val itemRepository: ItemRepository,
   private val itemIndexRepository: ItemIndexRepository,
-  private val settingService: SettingService
+  private val settingService: SettingService,
+  private val itemIndexService: ItemIndexService
 ) {
 
   fun getAll(settingId: Long): List<ItemListDto> = itemRepository.getAll(settingId).map { it.toDto() }
@@ -101,7 +101,7 @@ class ItemService(
     }
     itemRepository.save(item)
 
-    item.reindexRecursive()
+    itemIndexService.reindexRecursive(item)
 
     return get(item.id)
   }
@@ -188,7 +188,7 @@ class ItemService(
             if (nestedId == -1L) {
               item.extends = (item.extends() + newExtendsId).joinToString()
             }
-            item.reindexRecursive()
+            itemIndexService.reindexRecursive(item)
           }
       }
 
@@ -204,7 +204,7 @@ class ItemService(
             if (nestedId == -1L) {
               item.extends = item.extends().filter { it != oldExtendsId }.joinToString()
             }
-            item.reindexRecursive()
+            itemIndexService.reindexRecursive(item)
           }
       }
 
@@ -307,54 +307,6 @@ class ItemService(
           ?.values
           ?.set(valueIndex, newValue)
       }
-  }
-
-  private fun Item.superItems(): List<Long> =
-    extends().let {
-      (it + itemRepository
-        .findAllById(it)
-        .flatMap { it.superItems() })
-        .distinct()
-    }
-
-  private fun Item.indexedSuperItems(): List<ItemIndex> = itemIndexRepository.findAllByIdsLike(",$id,")
-
-  private fun Item.reindexThis() {
-    val newId = superItems()
-    val old = indexedSuperItems()
-    val oldId = old.asSequence().map { it.ref }.toSet()
-
-    newId
-      .filter { !oldId.contains(it) }
-      .forEach {
-        itemIndexRepository
-          .findAllByRefAndSettingId(it, settingId)
-          ?.also { it.ids = it.ids + "$id," }
-          ?: ItemIndex(it, settingId)
-            .also {
-              it.ids = ",$id,"
-              itemIndexRepository.save(it)
-            }
-      }
-
-    old.filter { !newId.contains(it.id) }
-      .forEach { it.ids = it.ids.replace(",$id,", ",") }
-  }
-
-  private fun Item.reindexExtends() {
-    reindexThis()
-    itemRepository.findAllById(extends()).forEach { it.reindexExtends() }
-  }
-
-  private fun Item.reindexRecursive() {
-    reindexExtends()
-    itemIndexRepository
-      .findAllByRef(id)
-      .asSequence()
-      .flatMap { it.ids() }
-      .toList()
-      .let { itemRepository.findAllById(it) }
-      .forEach { it.reindexThis() }
   }
 }
 
