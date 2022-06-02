@@ -80,7 +80,12 @@ class ItemsTreeDataProvider(
   override fun hasChildren(item: ItemListView?): Boolean = item?.isFolder ?: false
 
   override fun fetchChildrenFromBackEnd(query: HierarchicalQuery<ItemListView, Any>?): Stream<ItemListView> =
-    (query?.parent ?: root).let { tree[it]?.stream() ?: Stream.empty() }
+    (query?.parent ?: root).let {
+      tree[it]
+        ?.sortedWith(compareByDescending<ItemListView> { it.isFolder }.thenBy { it.name } )
+        ?.stream()
+        ?: Stream.empty()
+    }
 
   fun add(item: ItemListDto) {
     val chain = item
