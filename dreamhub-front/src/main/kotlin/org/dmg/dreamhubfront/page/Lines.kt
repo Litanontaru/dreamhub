@@ -279,16 +279,8 @@ open class RefLine(private val item: ItemTreeNode) : EditableLine() {
           itemController,
           item.types(),
           settingId
-        ) { selected ->
-          if (itemController.get(selected.id).isAbstract()) {
-            item.createNested().apply {
-              this.name = selected.name
-              this.extends.add(RefDto().also { it.id = selected.id })
-              item.add(this)
-            }
-          } else {
-            item.add(selected)
-          }
+        ) {
+          item.add(it)
           refreshItem(item, true)
         }.open()
       }

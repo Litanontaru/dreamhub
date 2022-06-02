@@ -427,10 +427,22 @@ class ItemAttributeNode(
   override fun add(value: ItemName) {
     when (value) {
       is NestedItemDto -> ValueDto().apply { nested = value }
-      else -> ValueDto().apply {
-        terminal = RefDto().apply {
-          id = value.id
-          item = itemController.get(id)
+      else -> {
+        val dto = itemController.get(value.id)
+        if (dto.isAbstract()) {
+          createNested()
+            .let { nested ->
+              nested.name = value.name
+              nested.extends.add(RefDto().also { it.id = value.id })
+              ValueDto().apply { this.nested = nested }
+            }
+        } else {
+          ValueDto().apply {
+            terminal = RefDto().apply {
+              id = value.id
+              item = dto
+            }
+          }
         }
       }
     }.let {
