@@ -72,8 +72,8 @@ interface ItemController {
   @PostMapping("/items/{id}/metadata")
   fun addMetadata(@PathVariable id: Long, @RequestBody newMetadata: MetadataDto)
 
-  @PostMapping("/items/{id}/metadata/{attributeName}")
-  fun removeMetadata(@PathVariable id: Long, @PathVariable attributeName: String)
+  @DeleteMapping("/items/{id}/metadata")
+  fun removeMetadata(@PathVariable id: Long, @RequestParam attributeName: String)
 
   @PutMapping("/items/{id}/metadata")
   fun modifyMetadata(@PathVariable id: Long, @RequestBody newMetadata: MetadataDto)
