@@ -137,7 +137,15 @@ fun AbstractItemDto.getAttributes(): Sequence<AttributeDto> =
     .mapNotNull { it.item }
     .flatMap { it.attributes }
 
-fun AbstractItemDto.allowedExtensions(): List<ItemName> = (listOf(TYPE) + extends.mapNotNull { it.item }.flatMap { it.allowedExtensions() }).distinct()
+fun AbstractItemDto.allowedExtensions(): List<ItemName> {
+  val base = listOf(TYPE)
+  val main = when (this) {
+    is ItemDto -> allowedExtensions
+    else -> listOf()
+  }
+  val recursive = extends.mapNotNull { it.item }.flatMap { it.allowedExtensions() }
+  return (base + main + recursive).distinct()
+}
 
 fun ItemDto.isAbstract(): Boolean = isAbstract(setOf())
 
