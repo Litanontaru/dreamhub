@@ -6,6 +6,7 @@ import org.dmg.dreamhubserver.repository.ItemIndexRepository
 import org.dmg.dreamhubserver.repository.ItemRepository
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ItemIndexService(
@@ -13,6 +14,7 @@ class ItemIndexService(
   private val itemIndexRepository: ItemIndexRepository
 ) {
   @Async
+  @Transactional
   fun reindexRecursive(item: Item) {
     item.reindexExtends()
     itemIndexRepository
