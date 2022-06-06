@@ -59,7 +59,12 @@ class ItemView(
             it.flexGrow = 1
             it.isAutoWidth = true
           }
-          tree.addColumn { item -> item.compacted().mapNotNull { it.rate() }.filter { it.isNotBlank() }.joinToString() }
+          tree.addColumn { item ->
+            item.compacted().mapNotNull { it.rate() }.filter { it.isNotBlank() }.joinToString()
+          }.also {
+            it.width = "10em"
+            it.flexGrow = 0
+          }
 
           tree.setDataProvider(dataProvider)
           tree.expand(dataProvider.root)
