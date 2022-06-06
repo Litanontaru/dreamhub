@@ -26,6 +26,7 @@ abstract class ItemTreeNode(
   open fun types(): List<ItemName> = throw UnsupportedOperationException()
   open fun isSingle(): Boolean = true
   open fun allowNested(): Boolean = false
+  open fun allowAdd(): Boolean = true
 
   open fun getAsPrimitive(): Any? = throw UnsupportedOperationException()
   open fun setAsPrimitive(newValue: Any?): Unit = throw UnsupportedOperationException()
@@ -480,4 +481,6 @@ class ItemAttributeNode(
   override fun isSingle(): Boolean = metadataDto.isSingle
 
   override fun allowNested(): Boolean = metadataDto.allowCreate
+
+  override fun allowAdd(): Boolean = metadataDto.allowReference
 }

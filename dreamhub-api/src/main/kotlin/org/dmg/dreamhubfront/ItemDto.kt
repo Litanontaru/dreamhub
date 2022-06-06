@@ -56,6 +56,7 @@ class MetadataDto {
   var typeId: Long = -1
   var isSingle: Boolean = false
   var allowCreate: Boolean = false
+  var allowReference: Boolean = false
   var isRequired: Boolean = false
 
   fun toItemName() = ItemName().also { it.id = typeId }
@@ -130,6 +131,7 @@ fun AbstractItemDto.getMetadata(): Sequence<MetadataDto> =
     .asSequence()
     .mapNotNull { it.item }
     .flatMap { it.getMetadata() + it.metadata }
+    .distinctBy { it.attributeName }
 
 fun AbstractItemDto.getAttributes(): Sequence<AttributeDto> =
   attributes.asSequence() + extends

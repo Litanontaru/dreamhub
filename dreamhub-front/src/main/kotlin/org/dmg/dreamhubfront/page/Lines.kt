@@ -179,6 +179,13 @@ class MetadataLine(private val item: MetadataNode) : EditableLine() {
           item.setAsPrimitive(item.getAsPrimitive().apply { allowCreate = it.value })
         }
       }
+      val allowReference = Checkbox("Референс").apply {
+        value = item.getAsPrimitive().allowReference
+
+        addValueChangeListener {
+          item.setAsPrimitive(item.getAsPrimitive().apply { allowReference = it.value })
+        }
+      }
       val isRequired = Checkbox("Обязательное").apply {
         value = item.getAsPrimitive().isRequired
 
@@ -191,7 +198,7 @@ class MetadataLine(private val item: MetadataNode) : EditableLine() {
         refreshItem(item.parent, true)
       }
 
-      listOf(StringLineElement(item.name()), ComponentLineElement(editType, isSingle, allowCreate, isRequired, removeButton))
+      listOf(StringLineElement(item.name()), ComponentLineElement(editType, isSingle, allowCreate, allowReference, isRequired, removeButton))
     } else {
       names[item.getAsPrimitive().typeId]
         ?.let { listOf(StringLineElement("${item.name()}: $it")) }
@@ -283,18 +290,22 @@ open class RefLine(private val item: ItemTreeNode) : EditableLine() {
     val name = item.name()?.let { "$it:" } ?: ""
 
     return if (editing && canAdd()) {
-      val addButton = Button(Icon(VaadinIcon.PLUS)) {
-        OptionSelection(
-          itemApi,
-          item.types(),
-          settingId
-        ) {
-          item.add(it)
-          refreshItem(item, true)
-        }.open()
+      val addButton = if (item.allowAdd()) {
+        Button(Icon(VaadinIcon.PLUS)) {
+          OptionSelection(
+            itemApi,
+            item.types(),
+            settingId
+          ) {
+            item.add(it)
+            refreshItem(item, true)
+          }.open()
+        }
+      } else {
+        null
       }
-      if (item.allowNested()) {
-        val createButton = if (item.types().size == 1) {
+      val createButton = if (item.allowNested()) {
+        if (item.types().size == 1) {
           Button(Icon(VaadinIcon.MAGIC)) {
             item.createNested().apply {
               extends.add(RefDto().also { it.id = item.types()[0].id })
@@ -316,9 +327,21 @@ open class RefLine(private val item: ItemTreeNode) : EditableLine() {
             }
           }
         }
-        listOf(StringLineElement(name), ComponentLineElement(addButton, createButton))
       } else {
-        listOf(StringLineElement(name), ComponentLineElement(addButton))
+        null
+      }
+      if (addButton != null) {
+        if (createButton != null) {
+          listOf(StringLineElement(name), ComponentLineElement(addButton, createButton))
+        } else {
+          listOf(StringLineElement(name), ComponentLineElement(addButton))
+        }
+      } else {
+        if (createButton != null) {
+          listOf(StringLineElement(name), ComponentLineElement(createButton))
+        } else {
+          listOf(StringLineElement(name))
+        }
       }
     } else {
       listOf(StringLineElement(name))
