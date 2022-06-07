@@ -280,6 +280,21 @@ class ItemService(
     }
   }
 
+  fun addAttributePrimitiveValue(id: Long, nestedId: Long, attributeName: String, newValue: String) = ValueDto().also {
+      it.primitive = newValue
+      addAttributeValue(id, nestedId, attributeName, it)
+    }
+
+  fun addAttributeTerminalValue(id: Long, nestedId: Long, attributeName: String, newValue: Long) = ValueDto().also {
+    it.terminal = RefDto().apply { this.id = newValue }
+    addAttributeValue(id, nestedId, attributeName, it)
+  }
+
+  fun addAttributeNestedValue(id: Long, nestedId: Long, attributeName: String, newValue: NestedItemDto) = ValueDto().also {
+    it.nested = newValue
+    addAttributeValue(id, nestedId, attributeName, it)
+  }
+
   fun removeAttributeValue(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {
     itemRepository
       .findById(id)
@@ -309,6 +324,11 @@ class ItemService(
           ?.values
           ?.set(valueIndex, newValue)
       }
+  }
+
+  fun modifyAttributePrimitiveValue(id: Long, nestedId: Long, attributeName: String, valueIndex: Int, newValue: String) = ValueDto().also {
+    it.primitive = newValue
+    modifyAttributeValue(id, nestedId, attributeName, valueIndex, it)
   }
 }
 

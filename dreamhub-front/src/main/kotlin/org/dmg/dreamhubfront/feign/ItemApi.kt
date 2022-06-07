@@ -83,15 +83,33 @@ class ItemApi(private val itemController: ItemController) {
     itemController.modifyMetadata(id, newMetadata)
   }
 
+  @Deprecated("Old api")
   fun addAttributeValue(id: Long, nestedId: Long = -1, attributeName: String, newValue: ValueDto) {
     itemController.addAttributeValue(id, nestedId, attributeName, newValue)
+  }
+
+  fun addAttributePrimitiveValue(id: Long, nestedId: Long = -1, attributeName: String, newValue: String): ValueDto {
+    return itemController.addAttributePrimitiveValue(id, nestedId, attributeName, newValue)
+  }
+
+  fun addAttributeTerminalValue(id: Long, nestedId: Long = -1, attributeName: String, newValue: Long): ValueDto {
+    return itemController.addAttributeTerminalValue(id, nestedId, attributeName, newValue)
+  }
+
+  fun addAttributeNestedValue(id: Long, nestedId: Long = -1, attributeName: String, newValue: NestedItemDto): ValueDto {
+    return itemController.addAttributeNestedValue(id, nestedId, attributeName, newValue)
   }
 
   fun removeAttributeValue(id: Long, nestedId: Long = -1, attributeName: String, valueIndex: Int) {
     itemController.removeAttributeValue(id, nestedId, attributeName, valueIndex)
   }
 
+  @Deprecated("Old api")
   fun modifyAttributeValue(id: Long, nestedId: Long = -1, attributeName: String, valueIndex: Int, newValue: ValueDto) {
     itemController.modifyAttributeValue(id, nestedId, attributeName, valueIndex, newValue)
+  }
+
+  fun modifyAttributePrimitiveValue(id: Long, nestedId: Long = -1, attributeName: String, valueIndex: Int, newValue: String): ValueDto {
+    return itemController.modifyAttributePrimitiveValue(id, nestedId, attributeName, valueIndex, newValue)
   }
 }
