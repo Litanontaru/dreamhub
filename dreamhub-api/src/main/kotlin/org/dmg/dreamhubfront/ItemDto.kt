@@ -30,7 +30,6 @@ abstract class AbstractItemDto : ItemName() {
 class ItemDto : AbstractItemDto() {
   var path: String = ""
   var settingId: Long = 0
-  var nextNestedId: Long = 0
   var allowedExtensions: MutableList<ItemName> = mutableListOf()
   var metadata: MutableList<MetadataDto> = mutableListOf()
   var formula: String = ""

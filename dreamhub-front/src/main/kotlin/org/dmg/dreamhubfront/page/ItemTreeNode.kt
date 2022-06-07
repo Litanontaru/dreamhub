@@ -20,9 +20,8 @@ abstract class ItemTreeNode(
   open fun canCompact(): Boolean = false
 
   open fun add(value: ItemName): Unit = throw UnsupportedOperationException()
+  open fun create(value: ItemName): Unit = throw UnsupportedOperationException()
   open fun remove(node: ItemTreeNode): Unit = throw UnsupportedOperationException()
-  open fun replace(value: ItemName): Unit = throw UnsupportedOperationException()
-  open fun createNested(): NestedItemDto = throw UnsupportedOperationException()
   open fun types(): List<ItemName> = throw UnsupportedOperationException()
   open fun isSingle(): Boolean = true
   open fun allowNested(): Boolean = false
@@ -107,15 +106,6 @@ abstract class ItemDtoTreeNode(
         itemDto = newValue
       }
     }
-  }
-
-  override fun createNested(): NestedItemDto = when (val item = itemDto) {
-    is ItemDto -> NestedItemDto().apply {
-      id = item.id
-      nestedId = item.nextNestedId
-      item.nextNestedId = item.nextNestedId + 1
-    }
-    else -> throw IllegalStateException()
   }
 }
 
@@ -387,13 +377,10 @@ class PrimitiveAttributeNode(
   override fun setAsPrimitive(newValue: Any?) {
     when (newValue) {
       is String -> {
-        val new = ValueDto().apply { primitive = newValue }
         if (values.isEmpty()) {
-          itemApi.addAttributeValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, new)
-          values.add(new)
+          values.add(itemApi.addAttributePrimitiveValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, newValue))
         } else {
-          itemApi.modifyAttributeValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, 0, new)
-          values.set(0, new)
+          values.set(0, itemApi.modifyAttributePrimitiveValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, 0, newValue))
         }
       }
       null -> {
@@ -427,31 +414,15 @@ class ItemAttributeNode(
   override fun canCompact() = metadataDto.isSingle
 
   override fun add(value: ItemName) {
-    when (value) {
-      is NestedItemDto -> ValueDto().apply { nested = value }
-      else -> {
-        val dto = itemApi.get(value.id)
-        if (dto.isAbstract()) {
-          createNested()
-            .let { nested ->
-              nested.name = value.name
-              nested.extends.add(RefDto().also { it.id = value.id })
-              ValueDto().apply { this.nested = nested }
-            }
-        } else {
-          ValueDto().apply {
-            terminal = RefDto().apply {
-              id = value.id
-              item = dto
-            }
-          }
-        }
-      }
-    }.let {
-      itemApi
-        .addAttributeValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, it)
-      values.add(it)
+    if (itemApi.get(value.id).isAbstract()) {
+      create(value)
+    } else {
+      itemApi.addAttributeTerminalValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, value.id).also { values.add(it) }
     }
+  }
+
+  override fun create(value: ItemName) {
+    itemApi.addAttributeNestedValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, value.id).also { values.add(it) }
   }
 
   override fun remove(node: ItemTreeNode) {
@@ -462,19 +433,6 @@ class ItemAttributeNode(
       }
     }
   }
-
-  override fun replace(value: ItemName) {
-    when (value) {
-      is NestedItemDto -> ValueDto().apply { nested = value }
-      else -> ValueDto().apply { terminal = RefDto().apply { id = value.id } }
-    }.let {
-      itemApi.modifyAttributeValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, 0, it)
-      values[0] = it
-    }
-  }
-
-  override fun createNested(): NestedItemDto =
-    generateSequence(parent) { it.parent }.last().createNested()
 
   override fun types(): List<ItemName> = listOf(ItemName().apply { id = metadataDto.typeId })
 

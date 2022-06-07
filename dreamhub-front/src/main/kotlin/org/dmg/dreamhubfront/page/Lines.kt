@@ -307,10 +307,7 @@ open class RefLine(private val item: ItemTreeNode) : EditableLine() {
       val createButton = if (item.allowNested()) {
         if (item.types().size == 1) {
           Button(Icon(VaadinIcon.MAGIC)) {
-            item.createNested().apply {
-              extends.add(RefDto().also { it.id = item.types()[0].id })
-              item.add(this)
-            }
+            item.create(ItemName().apply { id = item.types()[0].id })
             refreshItem(item, true)
           }
         } else {
@@ -318,10 +315,7 @@ open class RefLine(private val item: ItemTreeNode) : EditableLine() {
             val button = addItem(Icon(VaadinIcon.MAGIC))
             item.types().forEach { type ->
               button.subMenu.addItem(type.name) {
-                item.createNested().apply {
-                  extends.add(RefDto().also { it.id = type.id })
-                  item.add(this)
-                }
+                item.create(type)
                 refreshItem(item, true)
               }
             }

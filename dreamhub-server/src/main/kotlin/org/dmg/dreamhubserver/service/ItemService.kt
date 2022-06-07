@@ -61,8 +61,6 @@ class ItemService(
         .maxOfOrNull { it }
         ?: 0
 
-    this.id = id
-    this.nextNestedId = maxNestedId() + 1
     getRefItems()
     return this
   }
@@ -101,6 +99,7 @@ class ItemService(
       definition = newItem.toJson()
     }
     itemRepository.save(item)
+    item.modify { it.id = item.id }
 
     itemIndexService.reindexRecursive(item)
 
@@ -115,8 +114,9 @@ class ItemService(
     definition = definition.toDto().also { action(it) }.toJson()
   }
 
-  private fun Item.modify(nestedId: Long, action: (AbstractItemDto) -> Unit): ItemDto {
+  private fun Item.modify(nestedId: Long, prerequisite: (ItemDto) -> Unit = {}, action: (AbstractItemDto) -> Unit): ItemDto {
     val root = definition.toDto()
+    prerequisite(root)
     if (nestedId == -1L) {
       action(root)
     } else {
@@ -257,9 +257,9 @@ class ItemService(
       }
   }
 
-  fun addAttributeValue(id: Long, nestedId: Long, attributeName: String, newValue: ValueDto) {
+  fun addAttributeValue(id: Long, nestedId: Long, attributeName: String, newValue: ValueDto, action: (ItemDto) -> Unit = {}) {
     val item = itemRepository.findById(id).get()
-    item.modify(nestedId) { dto ->
+    item.modify(nestedId, action) { dto ->
       val attribute = dto
         .attributes
         .firstOrNull { it.name == attributeName }                            //Данные уже есть
@@ -286,13 +286,36 @@ class ItemService(
     }
 
   fun addAttributeTerminalValue(id: Long, nestedId: Long, attributeName: String, newValue: Long) = ValueDto().also {
-    it.terminal = RefDto().apply { this.id = newValue }
+    it.terminal = RefDto().apply {
+      this.id = newValue
+      item = get(newValue)
+    }
     addAttributeValue(id, nestedId, attributeName, it)
   }
 
-  fun addAttributeNestedValue(id: Long, nestedId: Long, attributeName: String, newValue: NestedItemDto) = ValueDto().also {
-    it.nested = newValue
-    addAttributeValue(id, nestedId, attributeName, it)
+  fun AbstractItemDto.maxNestedId(): Long =
+    attributes
+      .asSequence()
+      .flatMap { it.values }
+      .mapNotNull { it.nested }
+      .flatMap { sequenceOf(it.nestedId, it.maxNestedId()) }
+      .maxOfOrNull { it }
+      ?: 0
+
+  fun addAttributeNestedValue(id: Long, nestedId: Long, attributeName: String, newValue: Long) = ValueDto().also {
+    val item = get(newValue)
+    addAttributeValue(id, nestedId, attributeName, it) { root ->
+      it.nested = NestedItemDto().apply {
+        this.id = id
+        this.name = item.name
+        this.nestedId = root.maxNestedId() + 1
+
+        this.extends.add(RefDto().apply {
+          this.id = newValue
+          this.item = item
+        })
+      }
+    }
   }
 
   fun removeAttributeValue(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {

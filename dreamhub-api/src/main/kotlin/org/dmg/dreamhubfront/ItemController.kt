@@ -80,10 +80,6 @@ interface ItemController {
 
   //--------------------------------------------------------------------------------------------------------------------
 
-  @Deprecated("Old api")
-  @PostMapping("/items/{id}/{nestedId}/attribute/{attributeName}/values")
-  fun addAttributeValue(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable attributeName: String, @RequestBody newValue: ValueDto)
-
   @PostMapping("/items/{id}/{nestedId}/attribute/{attributeName}/values/primitive")
   fun addAttributePrimitiveValue(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable attributeName: String, @RequestBody newValue: String): ValueDto
 
@@ -91,14 +87,10 @@ interface ItemController {
   fun addAttributeTerminalValue(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable attributeName: String, @RequestBody newValue: Long): ValueDto
 
   @PostMapping("/items/{id}/{nestedId}/attribute/{attributeName}/values/nested")
-  fun addAttributeNestedValue(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable attributeName: String, @PathVariable newValue: NestedItemDto): ValueDto
+  fun addAttributeNestedValue(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable attributeName: String, @RequestBody newValue: Long): ValueDto
 
   @DeleteMapping("/items/{id}/{nestedId}/attribute/{attributeName}/values/{valueIndex}")
   fun removeAttributeValue(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable attributeName: String, @PathVariable valueIndex: Int)
-
-  @Deprecated("Old api")
-  @PutMapping("/items/{id}/{nestedId}/attribute/{attributeName}/values/{valueIndex}")
-  fun modifyAttributeValue(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable attributeName: String, @PathVariable valueIndex: Int, @RequestBody newValue: ValueDto)
 
   @PutMapping("/items/{id}/{nestedId}/attribute/{attributeName}/values/{valueIndex}/primitive")
   fun modifyAttributePrimitiveValue(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable attributeName: String, @PathVariable valueIndex: Int, @RequestBody newValue: String): ValueDto

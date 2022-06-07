@@ -76,10 +76,6 @@ class ItemControllerImpl(
   }
 
 
-  override fun addAttributeValue(id: Long, nestedId: Long, attributeName: String, newValue: ValueDto) {
-    service.addAttributeValue(id, nestedId, attributeName, newValue)
-  }
-
   override fun addAttributePrimitiveValue(id: Long, nestedId: Long, attributeName: String, newValue: String): ValueDto {
     return service.addAttributePrimitiveValue(id, nestedId, attributeName, newValue)
   }
@@ -88,16 +84,12 @@ class ItemControllerImpl(
     return service.addAttributeTerminalValue(id, nestedId, attributeName, newValue)
   }
 
-  override fun addAttributeNestedValue(id: Long, nestedId: Long, attributeName: String, newValue: NestedItemDto): ValueDto {
+  override fun addAttributeNestedValue(id: Long, nestedId: Long, attributeName: String, newValue: Long): ValueDto {
     return service.addAttributeNestedValue(id, nestedId, attributeName, newValue)
   }
 
   override fun removeAttributeValue(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {
     service.removeAttributeValue(id, nestedId, attributeName, valueIndex)
-  }
-
-  override fun modifyAttributeValue(id: Long, nestedId: Long, attributeName: String, valueIndex: Int, newValue: ValueDto) {
-    service.modifyAttributeValue(id, nestedId, attributeName, valueIndex, newValue)
   }
 
   override fun modifyAttributePrimitiveValue(id: Long, nestedId: Long, attributeName: String, valueIndex: Int, newValue: String): ValueDto {
