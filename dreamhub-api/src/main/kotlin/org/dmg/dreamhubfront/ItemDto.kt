@@ -36,9 +36,6 @@ class ItemDto : AbstractItemDto() {
   var isFinal: Boolean = false
 }
 
-class NestedItemDto : AbstractItemDto() {
-}
-
 class RefDto {
   var id: Long = 0
   var item: ItemDto? = null
@@ -61,7 +58,7 @@ class AttributeDto {
 }
 
 class ValueDto {
-  var nested: NestedItemDto? = null
+  var nested: AbstractItemDto? = null
   var terminal: RefDto? = null
   var primitive: String? = null
 

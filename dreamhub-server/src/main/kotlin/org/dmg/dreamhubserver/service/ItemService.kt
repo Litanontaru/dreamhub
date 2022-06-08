@@ -131,7 +131,7 @@ class ItemService(
     return root
   }
 
-  private fun NestedItemDto.modify(nestedId: Long, action: (NestedItemDto) -> Unit): Boolean =
+  private fun AbstractItemDto.modify(nestedId: Long, action: (AbstractItemDto) -> Unit): Boolean =
     if (this.nestedId == nestedId) {
       action(this)
       true
@@ -305,7 +305,7 @@ class ItemService(
   fun addAttributeNestedValue(id: Long, nestedId: Long, attributeName: String, newValue: Long) = ValueDto().also {
     val item = get(newValue)
     addAttributeValue(id, nestedId, attributeName, it) { root ->
-      it.nested = NestedItemDto().apply {
+      it.nested = AbstractItemDto().apply {
         this.id = id
         this.name = item.name
         this.nestedId = root.maxNestedId() + 1
