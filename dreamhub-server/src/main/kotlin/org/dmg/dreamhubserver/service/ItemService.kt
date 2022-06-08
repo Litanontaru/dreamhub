@@ -20,6 +20,7 @@ class ItemService(
   private val settingService: SettingService,
   private val itemIndexService: ItemIndexService
 ) {
+  fun reindexAll() = itemIndexService.reindexAll()
 
   fun getAll(settingId: Long): List<ItemListDto> = itemRepository.getAll(settingId).map { it.toDto() }
 

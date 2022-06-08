@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController
 class ItemControllerImpl(
   val service: ItemService
 ) : ItemController {
+  override fun reindexAll() = service.reindexAll()
+
   override fun getAll(settingId: Long, filter: String?, findUsages: Long?): List<ItemListDto> =
     filter?.let { service.getAll(settingId, it) }
       ?: findUsages?.let { service.getAll(settingId, it) }

@@ -15,6 +15,13 @@ class ItemIndexService(
 ) {
   @Async
   @Transactional
+  fun reindexAll() {
+    itemIndexRepository.deleteAll();
+    itemRepository.findAll().forEach { reindexRecursive(it) }
+  }
+
+  @Async
+  @Transactional
   fun reindexRecursive(item: Item) {
     item.reindexExtends()
     itemIndexRepository

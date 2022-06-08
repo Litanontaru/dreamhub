@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RequestParam
 
 @FeignClient(name = "api.item", url = "\${backend-url}")
 interface ItemController {
+  @PostMapping("/items/reindex")
+  fun reindexAll()
+
   //--------------------------------------------------------------------------------------------------------------------
 
   @GetMapping("/settings/{settingId}/items")
