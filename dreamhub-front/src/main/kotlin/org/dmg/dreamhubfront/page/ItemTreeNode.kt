@@ -302,7 +302,7 @@ class ExtendsNode(
 
   override fun add(value: ItemName) {
     itemApi
-      .addExtends(itemDto.id, itemDto.nestedId(), value.id)
+      .addExtends(itemDto.id, itemDto.nestedId, value.id)
       .let { parent?.setAsPrimitive(it) }
   }
 
@@ -310,7 +310,7 @@ class ExtendsNode(
     when (node) {
       is ItemDtoTreeNode -> {
         itemApi
-          .removeExtends(itemDto.id, itemDto.nestedId(), node.id())
+          .removeExtends(itemDto.id, itemDto.nestedId, node.id())
           .let { parent?.setAsPrimitive(it) }
       }
     }
@@ -378,14 +378,14 @@ class PrimitiveAttributeNode(
     when (newValue) {
       is String -> {
         if (values.isEmpty()) {
-          values.add(itemApi.addAttributePrimitiveValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, newValue))
+          values.add(itemApi.addAttributePrimitiveValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, newValue))
         } else {
-          values.set(0, itemApi.modifyAttributePrimitiveValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, 0, newValue))
+          values.set(0, itemApi.modifyAttributePrimitiveValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, 0, newValue))
         }
       }
       null -> {
         if (values.isNotEmpty()) {
-          itemApi.removeAttributeValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, 0)
+          itemApi.removeAttributeValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, 0)
           values.clear()
         }
       }
@@ -417,18 +417,18 @@ class ItemAttributeNode(
     if (itemApi.get(value.id).isAbstract()) {
       create(value)
     } else {
-      itemApi.addAttributeTerminalValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, value.id).also { values.add(it) }
+      itemApi.addAttributeTerminalValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, value.id).also { values.add(it) }
     }
   }
 
   override fun create(value: ItemName) {
-    itemApi.addAttributeNestedValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, value.id).also { values.add(it) }
+    itemApi.addAttributeNestedValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, value.id).also { values.add(it) }
   }
 
   override fun remove(node: ItemTreeNode) {
     when (node) {
       is ValueItemDtoTreeNode -> {
-        itemApi.removeAttributeValue(itemDto.id, itemDto.nestedId(), metadataDto.attributeName, node.index)
+        itemApi.removeAttributeValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, node.index)
         values.removeAt(node.index)
       }
     }

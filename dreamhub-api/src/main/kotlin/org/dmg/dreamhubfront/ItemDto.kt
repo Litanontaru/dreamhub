@@ -20,11 +20,10 @@ class TypeDto : ItemListDto() {
   var superTypeIds: List<Long> = listOf()
 }
 
-abstract class AbstractItemDto : ItemName() {
+open class AbstractItemDto : ItemName() {
+  var nestedId: Long = -1
   var extends: MutableList<RefDto> = mutableListOf()
   var attributes: MutableList<AttributeDto> = mutableListOf()
-
-  abstract fun nestedId(): Long
 }
 
 class ItemDto : AbstractItemDto() {
@@ -35,14 +34,9 @@ class ItemDto : AbstractItemDto() {
   var formula: String = ""
   var isType: Boolean = false
   var isFinal: Boolean = false
-
-  override fun nestedId(): Long = -1
 }
 
 class NestedItemDto : AbstractItemDto() {
-  var nestedId: Long = 0
-
-  override fun nestedId(): Long = nestedId
 }
 
 class RefDto {
