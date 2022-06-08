@@ -39,13 +39,15 @@ open class AbstractItemDto : ItemName() {
 
   open fun mainMetadata(): Sequence<MetadataDto> = emptySequence()
 
+  fun comboMetadata(): Sequence<MetadataDto> = superMetadata() + mainMetadata()
+
   fun comboMetadata(attributeName: String): MetadataDto? =
     mainMetadata().find { it.attributeName == attributeName }
       ?: superMetadata(attributeName)
 
   fun superMetadata(): Sequence<MetadataDto> =
     extendsItems()
-      .flatMap { it.superMetadata() + it.metadata }
+      .flatMap { it.comboMetadata() }
       .distinctBy { it.attributeName }
 
   fun superMetadata(attributeName: String): MetadataDto? =
@@ -57,6 +59,28 @@ open class AbstractItemDto : ItemName() {
           ?: it.superMetadata(attributeName)
       }
       .firstOrNull()
+
+  open fun inherit() {
+    extendsItems()
+      .map { it.inherit(); it }
+      .fold(this) { acc, i -> acc += i; acc }
+  }
+
+  operator fun plusAssign(right: AbstractItemDto) {
+    comboMetadata().forEach { meta ->
+      val l = attributes.find { it.name == meta.attributeName }
+      val r = right.attributes.find { it.name == meta.attributeName }
+      when {
+        r == null -> {} //do nothing
+        l == null -> attributes.add(AttributeDto().also {
+          it.name = meta.attributeName
+          it.inherited = r.comboValues().toMutableList()
+        })
+        meta.isSingle -> l += r.comboValues()[0]
+        else -> l += r.comboValues()
+      }
+    }
+  }
 }
 
 class ItemDto : AbstractItemDto() {
@@ -94,12 +118,31 @@ class AttributeDto {
   var values: MutableList<ValueDto> = mutableListOf()
 
   var inherited: MutableList<ValueDto>? = null
+
+  fun comboValues(): List<ValueDto> = inherited?.let { values.toList() + it } ?: values.toList()
+
+  operator fun plusAssign(right: ValueDto) {
+    val left = comboValues()[0]
+    when {
+      left.primitive != null -> {} //do nothing
+      right.primitive != null -> inherited = mutableListOf(right)
+      else -> left.item()!!.also { it.inherit() } += right.item()!!.also { it.inherit() }
+    }
+  }
+
+  operator fun plusAssign(values: List<ValueDto>) {
+    inherited
+      ?.let { it += values }
+      ?: run { inherited = values.toMutableList() }
+  }
 }
 
 class ValueDto {
   var nested: AbstractItemDto? = null
   var terminal: RefDto? = null
   var primitive: String? = null
+
+  fun item(): AbstractItemDto? = terminal?.item ?: nested
 }
 
 object StandardTypes {
