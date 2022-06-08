@@ -318,7 +318,7 @@ class ExtendsNode(
 
   override fun isSingle(): Boolean = false
 
-  override fun types(): List<ItemName> = itemDto.allowedExtensions()
+  override fun types(): List<ItemName> = itemDto.comboAllowedExtensions()
 }
 
 class AllowedExtensionsNode(

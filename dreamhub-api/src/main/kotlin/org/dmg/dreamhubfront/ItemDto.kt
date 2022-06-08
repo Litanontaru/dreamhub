@@ -27,13 +27,26 @@ open class AbstractItemDto : ItemName() {
 
   fun extendsItems() = extends.asSequence().mapNotNull { it.item }
 
+  fun comboName(): String = name.takeIf { it.isNotBlank() } ?: superName()
+
+  fun superName(): String = extendsItems().map { it.comboName() }.find { it.isNotBlank() } ?: ""
+
   open fun mainAllowedExtensions(): List<ItemName> = listOf()
 
-  fun allowedExtensions(): List<ItemName> =
-    listOf(TYPE)
-      .let { it + mainAllowedExtensions() }
-      .let { it + extendsItems().flatMap { it.allowedExtensions() } }
-      .distinct()
+  fun comboAllowedExtensions(): List<ItemName> = (listOf(TYPE) + mainAllowedExtensions() + superAllowedExtensions()).distinct()
+
+  fun superAllowedExtensions() = extendsItems().flatMap { it.comboAllowedExtensions() }.distinct()
+
+  open fun mainMetadata(): Sequence<MetadataDto> = emptySequence()
+
+  fun comboMetadata(attributeName: String): MetadataDto? =
+    mainMetadata().find { it.attributeName == attributeName }
+      ?: superMetadata(attributeName)
+
+  fun superMetadata(): Sequence<MetadataDto> =
+    extendsItems()
+      .flatMap { it.superMetadata() + it.metadata }
+      .distinctBy { it.attributeName }
 
   fun superMetadata(attributeName: String): MetadataDto? =
     extendsItems()
@@ -44,11 +57,6 @@ open class AbstractItemDto : ItemName() {
           ?: it.superMetadata(attributeName)
       }
       .firstOrNull()
-
-  fun superMetadata(): Sequence<MetadataDto> =
-    extendsItems()
-      .flatMap { it.superMetadata() + it.metadata }
-      .distinctBy { it.attributeName }
 }
 
 class ItemDto : AbstractItemDto() {
@@ -61,6 +69,8 @@ class ItemDto : AbstractItemDto() {
   var isFinal: Boolean = false
 
   override fun mainAllowedExtensions() = allowedExtensions
+
+  override fun mainMetadata(): Sequence<MetadataDto> = metadata.asSequence()
 }
 
 class RefDto {
