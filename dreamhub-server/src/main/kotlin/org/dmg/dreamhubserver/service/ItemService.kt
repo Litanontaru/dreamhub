@@ -49,18 +49,9 @@ class ItemService(
   private fun getAllTypeList(settingId: Long) =
     (settingService.getDependencies(settingId) + settingId).let { itemRepository.getAllTypes(it) }
 
-  fun get(id: Long): ItemDto = itemRepository.getDefinitionById(id).toDto().prepare(id)
+  fun get(id: Long): ItemDto = itemRepository.getDefinitionById(id).toDto().prepare()
 
-  private fun ItemDto.prepare(id: Long): ItemDto {
-    fun AbstractItemDto.maxNestedId(): Long =
-      attributes
-        .asSequence()
-        .flatMap { it.values }
-        .mapNotNull { it.nested }
-        .flatMap { sequenceOf(it.nestedId, it.maxNestedId()) }
-        .maxOfOrNull { it }
-        ?: 0
-
+  private fun ItemDto.prepare(): ItemDto {
     getRefItems()
     return this
   }
@@ -184,7 +175,7 @@ class ItemService(
       .let { item ->
         item
           .modify(nestedId) { it.extends.add(RefDto().also { it.id = newExtendsId }) }
-          .prepare(id)
+          .prepare()
           .also {
             if (nestedId == -1L) {
               item.extends = (item.extends() + newExtendsId).joinToString()
@@ -200,7 +191,7 @@ class ItemService(
       .let { item ->
         item
           .modify(nestedId) { it.extends.removeIf { it.id == oldExtendsId } }
-          .prepare(id)
+          .prepare()
           .also {
             if (nestedId == -1L) {
               item.extends = item.extends().filter { it != oldExtendsId }.joinToString()
