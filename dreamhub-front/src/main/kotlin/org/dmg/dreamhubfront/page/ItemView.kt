@@ -27,7 +27,7 @@ class ItemView(
       } else {
         isVisible = true
       }
-      var item = itemApi.get(itemId)
+      var item = !itemApi.get(itemId)
 
       add(HorizontalLayout().apply {
         TreeGrid<ItemTreeNode>().also { tree ->

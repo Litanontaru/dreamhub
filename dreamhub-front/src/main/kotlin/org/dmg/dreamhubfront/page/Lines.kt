@@ -26,7 +26,7 @@ object Lines {
     editing: Boolean,
     itemApi: ItemApi,
     settingId: Long,
-    refreshItem: (ItemTreeNode, Boolean) -> Unit
+    refreshItem: (ItemTreeNode, Boolean) -> Unit,
   ): HorizontalLayout = item
     .compacted()
     .toList()
@@ -115,10 +115,15 @@ open class EditableLine {
 
 class StringLine(private val item: ItemTreeNode, private val editWidth: String, private val validator: (String) -> String = { it }) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
-    val initial = (item.getAsPrimitive() as String?) ?: ""
-    return if (editing) {
+    val (initial, default) = when (val i = item.getAsPrimitive()) {
+      is String -> i to ""
+      is Pair<*, *> -> (i.first.toString() ?: "") to (i.second.toString() ?: "")
+      else -> "" to ""
+    }
+    return if (editing && !item.readOnly) {
       val editField = TextField().apply {
         value = initial
+        placeholder = default
         width = editWidth
 
         addValueChangeListener { item.setAsPrimitive(validator(it.value)) }
@@ -134,7 +139,7 @@ class StringLine(private val item: ItemTreeNode, private val editWidth: String, 
 class BooleanLine(private val item: ValueNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
     val initial = item.getAsPrimitive() as Boolean
-    return if (editing) {
+    return if (editing && !item.readOnly) {
       val editField = Checkbox().apply {
         value = initial
 
@@ -153,7 +158,7 @@ class MetadataLine(private val item: MetadataNode) : EditableLine() {
     val names = (this.itemApi.getAllTypes(settingId) + StandardTypes.ALL)
       .associate { it.id to it.name }
 
-    return if (editing) {
+    return if (editing && !item.readOnly) {
       val editType = ComboBox<Long>().apply {
         setItems(names.keys.toList())
         setItemLabelGenerator { names[it] }
@@ -209,7 +214,7 @@ class MetadataLine(private val item: MetadataNode) : EditableLine() {
 
 class ItemNameLine(private val item: ItemTreeNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
-    return if (editing) {
+    return if (editing && !item.readOnly) {
       val removeButton = Button(Icon(VaadinIcon.CLOSE)) {
         item.parent!!.remove(item)
         refreshItem(item.parent, true)
@@ -224,7 +229,7 @@ class ItemNameLine(private val item: ItemTreeNode) : EditableLine() {
 class ReferenceLine(private val item: ItemTreeNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
     val name = item.getAsPrimitive() as String
-    return if (editing) {
+    return if (editing && !item.readOnly) {
       val removeButton = Button(Icon(VaadinIcon.CLOSE)) {
         item.parent!!.remove(item)
         refreshItem(item.parent, true)
@@ -239,7 +244,7 @@ class ReferenceLine(private val item: ItemTreeNode) : EditableLine() {
 class ItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
     val name = item.getAsPrimitive() as String
-    return if (editing) {
+    return if (editing && !item.readOnly) {
       val editField = TextField().apply {
         value = name
         width = "25em"
@@ -262,7 +267,7 @@ class ItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
 class MainItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
     val name = item.getAsPrimitive() as String
-    return if (editing) {
+    return if (editing && !item.readOnly) {
       val editField = TextField().apply {
         value = name
         width = "25em"
@@ -289,7 +294,7 @@ open class RefLine(private val item: ItemTreeNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
     val name = item.name()?.let { "$it:" } ?: ""
 
-    return if (editing && canAdd()) {
+    return if (editing && canAdd() && !item.readOnly) {
       val addButton = if (item.allowAdd()) {
         Button(Icon(VaadinIcon.PLUS)) {
           OptionSelection(

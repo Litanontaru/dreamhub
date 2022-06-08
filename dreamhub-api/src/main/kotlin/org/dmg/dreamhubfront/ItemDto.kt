@@ -60,10 +60,10 @@ open class AbstractItemDto : ItemName() {
       }
       .firstOrNull()
 
-  open fun inherit() {
-    extendsItems()
-      .map { it.inherit(); it }
-      .fold(this) { acc, i -> acc += i; acc }
+  open operator fun not(): AbstractItemDto = apply { inherit() }
+
+  fun inherit() {
+    extendsItems().fold(this) { acc, i -> acc += !i; acc }
   }
 
   operator fun plusAssign(right: AbstractItemDto) {
@@ -95,6 +95,8 @@ class ItemDto : AbstractItemDto() {
   override fun mainAllowedExtensions() = allowedExtensions
 
   override fun mainMetadata(): Sequence<MetadataDto> = metadata.asSequence()
+
+  override operator fun not(): ItemDto = apply { inherit() }
 }
 
 class RefDto {
@@ -121,12 +123,14 @@ class AttributeDto {
 
   fun comboValues(): List<ValueDto> = inherited?.let { values.toList() + it } ?: values.toList()
 
+  fun showValues() = values to (inherited ?: mutableListOf())
+
   operator fun plusAssign(right: ValueDto) {
     val left = comboValues()[0]
     when {
       left.primitive != null -> {} //do nothing
       right.primitive != null -> inherited = mutableListOf(right)
-      else -> left.item()!!.also { it.inherit() } += right.item()!!.also { it.inherit() }
+      else -> !left.item()!! += !right.item()!!
     }
   }
 

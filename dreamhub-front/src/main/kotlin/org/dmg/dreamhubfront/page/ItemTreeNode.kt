@@ -9,7 +9,8 @@ import org.dmg.dreamhubfront.formula.formula
 import org.dmg.dreamhubfront.formula.rate
 
 abstract class ItemTreeNode(
-  val parent: ItemTreeNode?
+  val parent: ItemTreeNode?,
+  val readOnly: Boolean,
 ) {
   abstract fun name(): String?
   open fun rate(): String? = null
@@ -56,8 +57,9 @@ abstract class ItemTreeNode(
 abstract class ItemDtoTreeNode(
   private var itemDto: AbstractItemDto,
   private val itemApi: ItemApi,
-  parent: ItemTreeNode?
-) : ItemTreeNode(parent) {
+  parent: ItemTreeNode?,
+  readOnly: Boolean,
+) : ItemTreeNode(parent, readOnly) {
   fun id(): Long = itemDto.id
 
   override fun name() = null
@@ -74,14 +76,15 @@ abstract class ItemDtoTreeNode(
   fun childrenAttributes(): List<ItemTreeNode> {
     val children = mutableListOf<ItemTreeNode>()
 
-    val attributeDtoMap = itemDto.attributes.associate { it.name to it.values }
+    val attributeDtoMap = itemDto.attributes.associate { it.name to it.showValues() }
 
     itemDto
       .superMetadata()
       .forEach {
+        val (value, inherited) = attributeDtoMap[it.attributeName] ?: (mutableListOf<ValueDto>() to mutableListOf<ValueDto>())
         when {
-          it.typeId < -1 -> PrimitiveAttributeNode(itemDto, itemApi, it, attributeDtoMap[it.attributeName] ?: mutableListOf(), this)
-          else -> ItemAttributeNode(itemDto, itemApi, it, attributeDtoMap[it.attributeName] ?: mutableListOf(), this)
+          it.typeId < -1 -> PrimitiveAttributeNode(itemDto, itemApi, it, value.firstOrNull()?.primitive, inherited.firstOrNull()?.primitive, this, readOnly)
+          else -> ItemAttributeNode(itemDto, itemApi, it, value, inherited, this, readOnly)
         }.let { children.add(it) }
       }
 
@@ -112,18 +115,18 @@ abstract class ItemDtoTreeNode(
 class MainItemDtoTreeNode(
   private var itemDto: ItemDto,
   private val itemApi: ItemApi,
-) : ItemDtoTreeNode(itemDto, itemApi, null) {
+) : ItemDtoTreeNode(itemDto, itemApi, null, false) {
 
   override fun children(): List<ItemTreeNode> =
     mutableListOf(
-      FormulaNode(itemDto, itemApi, this),
-      IsTypeNode(itemDto, itemApi, this),
-      IsFinalNode(itemDto, itemApi, this),
-      AllowedExtensionsNode(itemDto, itemApi, this),
-      ExtendsNode(itemDto, itemApi, this)
+      FormulaNode(itemDto, itemApi, this, false),
+      IsTypeNode(itemDto, itemApi, this, false),
+      IsFinalNode(itemDto, itemApi, this, false),
+      AllowedExtensionsNode(itemDto, itemApi, this, false),
+      ExtendsNode(itemDto, itemApi, this, false)
     ) +
         childrenAttributes() +
-        itemDto.metadata.map { MetadataNode(itemDto, it, itemApi, this) }
+        itemDto.metadata.map { MetadataNode(itemDto, it, itemApi, this, false) }
 
   override fun count(): Int = 5 + attributesCount() + itemDto.metadata.size
 
@@ -147,8 +150,9 @@ open class ValueItemDtoTreeNode(
   private val itemDto: AbstractItemDto,
   private val itemApi: ItemApi,
   val index: Int,
-  parent: ItemTreeNode?
-) : ItemDtoTreeNode(itemDto, itemApi, parent) {
+  parent: ItemTreeNode?,
+  readOnly: Boolean,
+) : ItemDtoTreeNode(itemDto, itemApi, parent, readOnly) {
   override fun count(): Int = attributesCount().let {
     when {
       itemDto.nonFinalExtends().count() > 0 -> 1 + it
@@ -159,7 +163,7 @@ open class ValueItemDtoTreeNode(
   override fun children(): List<ItemTreeNode> = childrenAttributes().let {
     when {
       itemDto.nonFinalExtends().count() > 0 ->
-        listOf(ExtendsNode(itemDto, itemApi, this)) + it
+        listOf(ExtendsNode(itemDto, itemApi, this, readOnly)) + it
       else -> it
     }
   }
@@ -169,8 +173,9 @@ class ReferenceItemDtoTreeNode(
   private val itemDto: AbstractItemDto,
   private val itemApi: ItemApi,
   index: Int,
-  parent: ItemTreeNode?
-) : ValueItemDtoTreeNode(itemDto, itemApi, index, parent) {
+  parent: ItemTreeNode?,
+  readOnly: Boolean,
+) : ValueItemDtoTreeNode(itemDto, itemApi, index, parent, readOnly) {
   override fun count(): Int = attributesCount().let {
     when {
       itemDto is ItemDto && itemDto.isFinal -> it
@@ -181,7 +186,7 @@ class ReferenceItemDtoTreeNode(
   override fun children(): List<ItemTreeNode> = childrenAttributes().let {
     when {
       itemDto is ItemDto && itemDto.isFinal -> it
-      else -> listOf(ExtendsNode(itemDto, itemApi, this)) + it
+      else -> listOf(ExtendsNode(itemDto, itemApi, this, readOnly)) + it
     }
   }
 }
@@ -190,8 +195,9 @@ class MetadataNode(
   private val itemDto: ItemDto,
   private var metadataDto: MetadataDto,
   private val itemApi: ItemApi,
-  parent: ItemTreeNode
-) : ItemTreeNode(parent) {
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ItemTreeNode(parent, readOnly) {
   override fun name(): String = metadataDto.attributeName
 
   override fun hasChildren(): Boolean = false
@@ -215,8 +221,9 @@ class MetadataNode(
 abstract class ValueNode(
   private val name: String,
   private val type: ItemName,
-  parent: ItemTreeNode
-) : ItemTreeNode(parent) {
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ItemTreeNode(parent, readOnly) {
   override fun name() = name
 
   override fun hasChildren(): Boolean = false
@@ -231,8 +238,9 @@ abstract class ValueNode(
 class FormulaNode(
   val itemDto: ItemDto,
   val itemApi: ItemApi,
-  parent: ItemTreeNode
-) : ValueNode("Формула", STRING, parent) {
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ValueNode("Формула", STRING, parent, readOnly) {
   override fun getAsPrimitive() = itemDto.formula
 
   override fun setAsPrimitive(newValue: Any?) {
@@ -248,8 +256,9 @@ class FormulaNode(
 class IsTypeNode(
   val itemDto: ItemDto,
   val itemApi: ItemApi,
-  parent: ItemTreeNode
-) : ValueNode("Это тип", StandardTypes.BOOLEAN, parent) {
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ValueNode("Это тип", StandardTypes.BOOLEAN, parent, readOnly) {
   override fun getAsPrimitive() = itemDto.isType
 
   override fun setAsPrimitive(newValue: Any?) {
@@ -265,8 +274,9 @@ class IsTypeNode(
 class IsFinalNode(
   val itemDto: ItemDto,
   val itemApi: ItemApi,
-  parent: ItemTreeNode
-) : ValueNode("Финальное", StandardTypes.BOOLEAN, parent) {
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ValueNode("Финальное", StandardTypes.BOOLEAN, parent, readOnly) {
   override fun getAsPrimitive() = itemDto.isFinal
 
   override fun setAsPrimitive(newValue: Any?) {
@@ -282,8 +292,9 @@ class IsFinalNode(
 class ExtendsNode(
   private val itemDto: AbstractItemDto,
   private val itemApi: ItemApi,
-  parent: ItemTreeNode
-) : ItemTreeNode(parent) {
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ItemTreeNode(parent, readOnly) {
   override fun name(): String = "Основа"
 
   private fun extends() = when (parent) {
@@ -296,7 +307,7 @@ class ExtendsNode(
   override fun children(): List<ItemTreeNode> =
     extends()
       .withIndex()
-      .map { ReferenceItemDtoTreeNode(it.value, itemApi, it.index, this) }.toList()
+      .map { ReferenceItemDtoTreeNode(it.value, itemApi, it.index, this, readOnly) }.toList()
 
   override fun count() = extends().count()
 
@@ -324,13 +335,14 @@ class ExtendsNode(
 class AllowedExtensionsNode(
   private val itemDto: ItemDto,
   private val itemApi: ItemApi,
-  parent: ItemTreeNode
-) : ItemTreeNode(parent) {
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ItemTreeNode(parent, readOnly) {
   override fun name(): String = "Разрешены основы"
 
   override fun hasChildren(): Boolean = itemDto.allowedExtensions.isNotEmpty()
 
-  override fun children(): List<ItemTreeNode> = itemDto.allowedExtensions.map { ItemNameNode(it, this) }
+  override fun children(): List<ItemTreeNode> = itemDto.allowedExtensions.map { ItemNameNode(it, this, readOnly) }
 
   override fun count(): Int = itemDto.allowedExtensions.size
 
@@ -353,7 +365,7 @@ class AllowedExtensionsNode(
   override fun isSingle(): Boolean = false
 }
 
-class ItemNameNode(private val itemName: ItemName, parent: ItemTreeNode) : ItemTreeNode(parent) {
+class ItemNameNode(private val itemName: ItemName, parent: ItemTreeNode, readOnly: Boolean) : ItemTreeNode(parent, readOnly) {
   fun id() = itemName.id
 
   override fun name() = itemName.name
@@ -369,24 +381,28 @@ class PrimitiveAttributeNode(
   private val itemDto: AbstractItemDto,
   private val itemApi: ItemApi,
   private val metadataDto: MetadataDto,
-  private val values: MutableList<ValueDto>,
-  parent: ItemTreeNode
-) : ValueNode(metadataDto.attributeName, metadataDto.toItemName(), parent) {
-  override fun getAsPrimitive() = values.firstOrNull()?.primitive
+  private var value: String?,
+  private var inherited: String?,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ValueNode(metadataDto.attributeName, metadataDto.toItemName(), parent, readOnly) {
+  override fun getAsPrimitive() = value to inherited
 
   override fun setAsPrimitive(newValue: Any?) {
     when (newValue) {
       is String -> {
-        if (values.isEmpty()) {
-          values.add(itemApi.addAttributePrimitiveValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, newValue))
+        if (value == null) {
+          itemApi.addAttributePrimitiveValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, newValue)
+          value = newValue
         } else {
-          values.set(0, itemApi.modifyAttributePrimitiveValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, 0, newValue))
+          itemApi.modifyAttributePrimitiveValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, 0, newValue)
+          value = newValue
         }
       }
       null -> {
-        if (values.isNotEmpty()) {
+        if (value != null) {
           itemApi.removeAttributeValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, 0)
-          values.clear()
+          value = null
         }
       }
     }
@@ -398,18 +414,23 @@ class ItemAttributeNode(
   private val itemApi: ItemApi,
   private val metadataDto: MetadataDto,
   private val values: MutableList<ValueDto>,
-  parent: ItemTreeNode
-) : ItemTreeNode(parent) {
+  private val inherited: MutableList<ValueDto>,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ItemTreeNode(parent, readOnly) {
   override fun name() = metadataDto.attributeName
 
-  override fun hasChildren() = values.isNotEmpty()
+  override fun hasChildren() =
+    values.isNotEmpty() || inherited.isNotEmpty()
 
-  override fun children(): List<ItemTreeNode> = values.withIndex().mapNotNull { value ->
-    value.value.terminal?.item?.let { ReferenceItemDtoTreeNode(it, itemApi, value.index, this) }
-      ?: value.value.nested?.let { ValueItemDtoTreeNode(it, itemApi, value.index, this) }
-  }
+  override fun children(): List<ItemTreeNode> =
+    values.withIndex().mapNotNull { value ->
+      value.value.terminal?.item?.let { ReferenceItemDtoTreeNode(it, itemApi, value.index, this, readOnly) }
+        ?: value.value.nested?.let { ValueItemDtoTreeNode(it, itemApi, value.index, this, readOnly) }
+    } + inherited.mapNotNull { it.item() }.map { ReferenceItemDtoTreeNode(it, itemApi, -2, this, true) }
 
-  override fun count(): Int = values.size
+
+  override fun count(): Int = values.size + inherited.size
 
   override fun canCompact() = metadataDto.isSingle
 
