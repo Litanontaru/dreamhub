@@ -117,7 +117,7 @@ class StringLine(private val item: ItemTreeNode, private val editWidth: String, 
   override fun getElements(editing: Boolean): List<LineElement> {
     val (initial, default) = when (val i = item.getAsPrimitive()) {
       is String -> i to ""
-      is Pair<*, *> -> (i.first.toString() ?: "") to (i.second.toString() ?: "")
+      is Pair<*, *> -> (i.first?.toString() ?: "") to (i.second?.toString() ?: "")
       else -> "" to ""
     }
     return if (editing && !item.readOnly) {
