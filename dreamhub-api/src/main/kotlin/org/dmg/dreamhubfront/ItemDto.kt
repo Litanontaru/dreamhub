@@ -24,6 +24,31 @@ open class AbstractItemDto : ItemName() {
   var nestedId: Long = -1
   var extends: MutableList<RefDto> = mutableListOf()
   var attributes: MutableList<AttributeDto> = mutableListOf()
+
+  fun extendsItems() = extends.asSequence().mapNotNull { it.item }
+
+  open fun mainAllowedExtensions(): List<ItemName> = listOf()
+
+  fun allowedExtensions(): List<ItemName> =
+    listOf(TYPE)
+      .let { it + mainAllowedExtensions() }
+      .let { it + extendsItems().flatMap { it.allowedExtensions() } }
+      .distinct()
+
+  fun superMetadata(attributeName: String): MetadataDto? =
+    extendsItems()
+      .mapNotNull {
+        it
+          .metadata
+          .firstOrNull { it.attributeName == attributeName }
+          ?: it.superMetadata(attributeName)
+      }
+      .firstOrNull()
+
+  fun superMetadata(): Sequence<MetadataDto> =
+    extendsItems()
+      .flatMap { it.superMetadata() + it.metadata }
+      .distinctBy { it.attributeName }
 }
 
 class ItemDto : AbstractItemDto() {
@@ -34,6 +59,8 @@ class ItemDto : AbstractItemDto() {
   var formula: String = ""
   var isType: Boolean = false
   var isFinal: Boolean = false
+
+  override fun mainAllowedExtensions() = allowedExtensions
 }
 
 class RefDto {
@@ -104,47 +131,14 @@ object StandardTypes {
   val ALL = listOf(NOTHING, STRING, POSITIVE, INT, DECIMAL, BOOLEAN, TYPE)
 }
 
-fun AbstractItemDto.superMetadata(attributeName: String): MetadataDto? =
-  extends
-    .asSequence()
-    .mapNotNull { it.item }
-    .mapNotNull {
-      it
-        .metadata
-        .firstOrNull { it.attributeName == attributeName }
-        ?: it.superMetadata(attributeName)
-    }
-    .firstOrNull()
-
-fun AbstractItemDto.superMetadata(): Sequence<MetadataDto> =
-  extends
-    .asSequence()
-    .mapNotNull { it.item }
-    .flatMap { it.superMetadata() + it.metadata }
-    .distinctBy { it.attributeName }
-
 @Deprecated("old and wrong")
-fun AbstractItemDto.attributes(): Sequence<AttributeDto> =
-  attributes.asSequence() + extends
-    .asSequence()
-    .mapNotNull { it.item }
-    .flatMap { it.attributes }
-
-fun AbstractItemDto.allowedExtensions(): List<ItemName> {
-  val base = listOf(TYPE)
-  val main = when (this) {
-    is ItemDto -> allowedExtensions
-    else -> listOf()
-  }
-  val recursive = extends.mapNotNull { it.item }.flatMap { it.allowedExtensions() }
-  return (base + main + recursive).distinct()
-}
+fun AbstractItemDto.attributes(): Sequence<AttributeDto> = attributes.asSequence() + extendsItems().flatMap { it.attributes }
 
 fun ItemDto.isAbstract(): Boolean = isAbstract(setOf())
 
 fun ItemDto.isAbstract(attributeNames: Set<String>): Boolean =
-  metadata.filter{ it.isRequired }.any { !attributeNames.contains(it.attributeName) } ||
+  metadata.filter { it.isRequired }.any { !attributeNames.contains(it.attributeName) } ||
       (attributeNames + attributes.map { it.name })
-        .let { attributes -> extends.any { it.item?.isAbstract(attributes) ?: false } }
+        .let { attributes -> extendsItems().any { it.isAbstract(attributes) } }
 
-fun AbstractItemDto.nonFinalExtends() = extends.mapNotNull { it.item }.filter { !it.isFinal }
+fun AbstractItemDto.nonFinalExtends() = extendsItems().filter { !it.isFinal }

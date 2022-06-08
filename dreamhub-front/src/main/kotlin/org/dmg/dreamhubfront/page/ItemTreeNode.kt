@@ -287,11 +287,11 @@ class ExtendsNode(
   override fun name(): String = "Основа"
 
   private fun extends() = when (parent) {
-    is MainItemDtoTreeNode -> itemDto.extends.mapNotNull { it.item }
+    is MainItemDtoTreeNode -> itemDto.extendsItems()
     else -> itemDto.nonFinalExtends()
   }
 
-  override fun hasChildren(): Boolean = extends().isNotEmpty()
+  override fun hasChildren(): Boolean = extends().any()
 
   override fun children(): List<ItemTreeNode> =
     extends()

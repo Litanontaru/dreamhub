@@ -19,6 +19,6 @@ fun AbstractItemDto.formula(): String? =
     is ItemDto -> item.formula.takeIf { it.isNotBlank() }
     else -> null
   }
-    ?: extends.asSequence().mapNotNull { it.item }.mapNotNull { it.formula() }.firstOrNull()
+    ?: extendsItems().mapNotNull { it.formula() }.firstOrNull()
 
 fun ValueDto.rate() = terminal?.item?.rate() ?: nested?.rate() ?: primitive?.toDecimalOrNull() ?: Decimal.NONE
