@@ -132,7 +132,7 @@ object StandardTypes {
 }
 
 @Deprecated("old and wrong")
-fun AbstractItemDto.attributes(): Sequence<AttributeDto> = attributes.asSequence() + extendsItems().flatMap { it.attributes }
+fun AbstractItemDto.attributesLegacy(): Sequence<AttributeDto> = attributes.asSequence() + extendsItems().flatMap { it.attributes }
 
 fun ItemDto.isAbstract(): Boolean = isAbstract(setOf())
 

@@ -6,7 +6,7 @@ import org.dmg.dreamhubfront.formula.Formula.toFormula
 fun AbstractItemDto.rate(): Decimal? = formula()?.toFormula(getContext())?.calculate()
 
 fun AbstractItemDto.getContext(): Context =
-  attributes()
+  attributesLegacy()
     .groupBy({ it.name }, { it.values })
     .mapValues { it.value.flatMap { it }.let { value -> value.map { it.rate() } } }
     .let { attributes ->
