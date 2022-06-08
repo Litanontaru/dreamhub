@@ -92,14 +92,14 @@ class MetadataDto {
 class AttributeDto {
   var name: String = ""
   var values: MutableList<ValueDto> = mutableListOf()
+
+  var inherited: MutableList<ValueDto>? = null
 }
 
 class ValueDto {
   var nested: AbstractItemDto? = null
   var terminal: RefDto? = null
   var primitive: String? = null
-
-  var itemOwnerId: Long = 0
 }
 
 object StandardTypes {

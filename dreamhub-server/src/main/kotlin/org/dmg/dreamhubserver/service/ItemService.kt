@@ -376,11 +376,12 @@ val mapper = ObjectMapper().apply {
       context.addBeanSerializerModifier(object : BeanSerializerModifier() {
         override fun modifySerializer(config: SerializationConfig, desc: BeanDescription, serializer: JsonSerializer<*>): JsonSerializer<*> {
           return when {
+            AttributeDto::class.java.isAssignableFrom(desc.getBeanClass()) -> AttributeDtoSerializer(serializer as JsonSerializer<Any?>)
             RefDto::class.java.isAssignableFrom(desc.getBeanClass()) -> RefDtoSerializer(serializer as JsonSerializer<Any?>)
             else -> serializer
           }
         }
-      });
+      })
     }
   })
 }
