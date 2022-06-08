@@ -104,7 +104,7 @@ object StandardTypes {
   val ALL = listOf(NOTHING, STRING, POSITIVE, INT, DECIMAL, BOOLEAN, TYPE)
 }
 
-fun AbstractItemDto.getMetadata(attributeName: String): MetadataDto? =
+fun AbstractItemDto.superMetadata(attributeName: String): MetadataDto? =
   extends
     .asSequence()
     .mapNotNull { it.item }
@@ -112,18 +112,19 @@ fun AbstractItemDto.getMetadata(attributeName: String): MetadataDto? =
       it
         .metadata
         .firstOrNull { it.attributeName == attributeName }
-        ?: it.getMetadata(attributeName)
+        ?: it.superMetadata(attributeName)
     }
     .firstOrNull()
 
-fun AbstractItemDto.getMetadata(): Sequence<MetadataDto> =
+fun AbstractItemDto.superMetadata(): Sequence<MetadataDto> =
   extends
     .asSequence()
     .mapNotNull { it.item }
-    .flatMap { it.getMetadata() + it.metadata }
+    .flatMap { it.superMetadata() + it.metadata }
     .distinctBy { it.attributeName }
 
-fun AbstractItemDto.getAttributes(): Sequence<AttributeDto> =
+@Deprecated("old and wrong")
+fun AbstractItemDto.attributes(): Sequence<AttributeDto> =
   attributes.asSequence() + extends
     .asSequence()
     .mapNotNull { it.item }

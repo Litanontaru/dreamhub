@@ -77,7 +77,7 @@ abstract class ItemDtoTreeNode(
     val attributeDtoMap = itemDto.attributes.associate { it.name to it.values }
 
     itemDto
-      .getMetadata()
+      .superMetadata()
       .forEach {
         when {
           it.typeId < -1 -> PrimitiveAttributeNode(itemDto, itemApi, it, attributeDtoMap[it.attributeName] ?: mutableListOf(), this)
@@ -88,7 +88,7 @@ abstract class ItemDtoTreeNode(
     return children
   }
 
-  fun attributesCount(): Int = itemDto.getMetadata().count()
+  fun attributesCount(): Int = itemDto.superMetadata().count()
 
   override fun canCompact() = count() == 1
 

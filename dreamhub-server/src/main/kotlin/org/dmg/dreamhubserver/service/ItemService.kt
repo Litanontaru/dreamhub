@@ -256,7 +256,7 @@ class ItemService(
         .firstOrNull { it.name == attributeName }                            //Данные уже есть
         ?: dto
           .refreshExtendsOnly()
-          .getMetadata(attributeName)
+          .superMetadata(attributeName)
           ?.let { metatdata ->        //Данных нет, но метаданные есть
             AttributeDto().also {
               it.name = attributeName

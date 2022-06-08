@@ -6,11 +6,11 @@ import org.dmg.dreamhubfront.formula.Formula.toFormula
 fun AbstractItemDto.rate(): Decimal? = formula()?.toFormula(getContext())?.calculate()
 
 fun AbstractItemDto.getContext(): Context =
-  getAttributes()
+  attributes()
     .groupBy({ it.name }, { it.values })
     .mapValues { it.value.flatMap { it }.let { value -> value.map { it.rate() } } }
     .let { attributes ->
-      attributes + getMetadata().map { it.attributeName }.filter { !attributes.containsKey(it) }.map { it to listOf(NanDecimal) }
+      attributes + superMetadata().map { it.attributeName }.filter { !attributes.containsKey(it) }.map { it to listOf(NanDecimal) }
     }
     .let { Context(it) }
 
