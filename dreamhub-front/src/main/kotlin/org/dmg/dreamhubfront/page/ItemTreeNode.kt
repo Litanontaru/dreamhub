@@ -162,8 +162,7 @@ open class ValueItemDtoTreeNode(
 
   override fun children(): List<ItemTreeNode> = childrenAttributes().let {
     when {
-      itemDto.nonFinalExtends().count() > 0 ->
-        listOf(ExtendsNode(itemDto, itemApi, this, readOnly)) + it
+      itemDto.nonFinalExtends().count() > 0 -> listOf(ExtendsNode(itemDto, itemApi, this, readOnly)) + it
       else -> it
     }
   }
@@ -424,10 +423,11 @@ class ItemAttributeNode(
     values.isNotEmpty() || inherited.isNotEmpty()
 
   override fun children(): List<ItemTreeNode> =
-    values.withIndex().mapNotNull { value ->
-      value.value.terminal?.item?.let { ReferenceItemDtoTreeNode(it, itemApi, value.index, this, readOnly) }
-        ?: value.value.nested?.let { ValueItemDtoTreeNode(it, itemApi, value.index, this, readOnly) }
-    } + inherited.mapNotNull { it.item() }.map { ReferenceItemDtoTreeNode(it, itemApi, -2, this, true) }
+    values.withIndex().mapNotNull { valueToNode(it.value, it.index, readOnly) } +  inherited.mapNotNull { valueToNode(it, -2, true) }
+
+  private fun valueToNode(v: ValueDto, i: Int, readOnly: Boolean) =
+    (v.terminal?.item?.let { ReferenceItemDtoTreeNode(it, itemApi, i, this, readOnly) }
+      ?: v.nested?.let { ValueItemDtoTreeNode(it, itemApi, i, this, readOnly) })
 
 
   override fun count(): Int = values.size + inherited.size
