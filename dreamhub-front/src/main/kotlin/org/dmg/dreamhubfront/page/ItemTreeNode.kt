@@ -102,7 +102,7 @@ abstract class ItemDtoTreeNode(
   override fun setAsPrimitive(newValue: Any?) {
     when (newValue) {
       is String -> {
-        itemApi.setName(id = itemDto.id, newName = newValue)
+        itemApi.setName(itemDto.id, itemDto.nestedId, "'$newValue'")
         itemDto.name = newValue
       }
       is ItemDto -> {
@@ -422,6 +422,8 @@ class ItemAttributeNode(
   override fun hasChildren() =
     values.isNotEmpty() || inherited.isNotEmpty()
 
+  fun hasOwnValue() = values.isNotEmpty()
+
   override fun children(): List<ItemTreeNode> =
     values.withIndex().mapNotNull { valueToNode(it.value, it.index, readOnly) } +  inherited.mapNotNull { valueToNode(it, -2, true) }
 
@@ -459,7 +461,7 @@ class ItemAttributeNode(
 
   override fun isSingle(): Boolean = metadataDto.isSingle
 
-  override fun allowNested(): Boolean = metadataDto.allowCreate
+  override fun allowNested(): Boolean = metadataDto.allowCreate && !(isSingle() && hasOwnValue())
 
-  override fun allowAdd(): Boolean = metadataDto.allowReference
+  override fun allowAdd(): Boolean = metadataDto.allowReference && !(isSingle() && hasOwnValue())
 }

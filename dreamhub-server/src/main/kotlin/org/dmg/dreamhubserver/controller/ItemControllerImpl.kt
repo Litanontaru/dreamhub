@@ -30,7 +30,7 @@ class ItemControllerImpl(
   }
 
   override fun setName(id: Long, nestedId: Long, newName: String) {
-    service.setName(id, nestedId, newName)
+    service.setName(id, nestedId, newName.substring(1, newName.length - 1))
   }
 
   override fun setPath(id: Long, newPath: String) {
