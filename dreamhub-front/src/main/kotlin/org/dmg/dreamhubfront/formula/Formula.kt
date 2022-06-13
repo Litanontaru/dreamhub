@@ -3,6 +3,8 @@ package org.dmg.dreamhubfront.formula
 interface FNode {
   fun calculate(): Decimal = throw UnsupportedOperationException()
 
+  fun close(): FNode = this
+
   operator fun unaryMinus(): FNode = FNegate(this)
   operator fun plus(right: FNode): FNode = FSum(listOf(this, right))
   operator fun minus(right: FNode): FNode = this + (-right)
@@ -38,8 +40,14 @@ class FNegate(private val value: FNode) : FNode {
   override fun calculate() = -value.calculate()
 }
 
-class FSum(private val values: List<FNode>) : FNode {
+open class FClosedSum(private val values: List<FNode>) : FNode {
   override fun calculate(): Decimal = values.fold(Decimal.NONE as Decimal) { acc, r -> acc + r.calculate() }
+}
+
+class FSum(private val values: List<FNode>) : FClosedSum(values) {
+  override fun calculate(): Decimal = values.fold(Decimal.NONE as Decimal) { acc, r -> acc + r.calculate() }
+
+  override fun close(): FNode = FClosedSum(values)
 
   override fun plus(right: FNode) = FSum(values + right)
 
@@ -123,7 +131,7 @@ object Formula {
         i++
 
         when (part) {
-          ")" -> return result
+          ")" -> return result.close()
 
           "+" -> action = { a, b -> a + b }
           "-" -> action = { a, b -> a - b }
@@ -151,7 +159,7 @@ object Formula {
         }
 
         if (i == parts.size) {
-          return result
+          return result.close()
         }
       }
     }

@@ -8,12 +8,21 @@ import java.math.RoundingMode
 
 open class Decimal(val value: BigDecimal, val type: String) : Comparable<Decimal> {
   open operator fun unaryMinus(): Decimal = Decimal(-value, type)
-  open operator fun plus(right: Decimal) = Decimal(value + right.value, combineTypes(right))
-  open operator fun minus(right: Decimal) = Decimal(value - right.value, combineTypes(right))
+
+  open operator fun plus(right: Decimal) = when(right) {
+    is NanDecimal -> NanDecimal
+    is NoneDecimal -> Decimal(value, combineTypes(right))
+    else -> Decimal(value + right.value, combineTypes(right))
+  }
+
+  open operator fun minus(right: Decimal) = this + (-right)
+
   open operator fun times(right: Decimal) = when (right) {
+    is NanDecimal -> NanDecimal
     is NoneDecimal -> Decimal(value, combineTypes(right))
     else -> Decimal(value * right.value, combineTypes(right))
   }
+
   open operator fun div(right: Decimal) = Decimal(BigDecimal("1.0") * value / right.value, combineTypes(right))
 
   fun combineTypes(right: Decimal) = type.takeIf { it.isNotBlank() } ?: right.type

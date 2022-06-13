@@ -10,7 +10,7 @@ fun AbstractItemDto.getContext(): Context =
     .groupBy({ it.name }, { it.comboValues() })
     .mapValues { it.value.flatMap { it }.let { value -> value.map { it.rate() } } }
     .let { attributes ->
-      attributes + superMetadata().map { it.attributeName }.filter { !attributes.containsKey(it) }.map { it to listOf(NanDecimal) }
+      attributes + comboMetadata().map { it.attributeName }.filter { !attributes.containsKey(it) }.map { it to listOf(NanDecimal) }
     }
     .let { Context(it) }
 
