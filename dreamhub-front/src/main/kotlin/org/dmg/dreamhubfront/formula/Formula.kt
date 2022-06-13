@@ -10,6 +10,7 @@ interface FNode {
   operator fun minus(right: FNode): FNode = this + (-right)
   operator fun times(right: FNode): FNode = FTimes(listOf(this, right))
   operator fun div(right: FNode): FNode = FDiv(this, right)
+  fun orZero(): FNode = FOrZero(this)
 
   infix fun and(right: FNode): FNode = FNodeList(listOf(this, right))
   fun min(): FNode = this
@@ -49,6 +50,8 @@ class FSum(private val values: List<FNode>) : FClosedSum(values) {
 
   override fun close(): FNode = FClosedSum(values)
 
+  override fun orZero(): FNode  = FSum(values.dropLast(1) + values.last().orZero())
+
   override fun plus(right: FNode) = FSum(values + right)
 
   override fun times(right: FNode) = FSum(values.dropLast(1) + (values.last() * right))
@@ -59,10 +62,14 @@ class FSum(private val values: List<FNode>) : FClosedSum(values) {
 class FTimes(private val values: List<FNode>) : FNode {
   override fun calculate(): Decimal = values.fold(Decimal.NONE as Decimal) { acc, r -> acc * r.calculate() }
 
+  override fun orZero(): FNode  = FTimes(values.dropLast(1) + values.last().orZero())
+
   override fun times(right: FNode): FNode = FTimes(values + right)
 }
 
 class FDiv(private val left: FNode, private val right: FNode) : FNode {
+  override fun orZero(): FNode  = FDiv(left, right.orZero())
+
   override fun calculate(): Decimal = left.calculate() / right.calculate()
 }
 
@@ -71,9 +78,9 @@ class FNone(val type: String) : FNode {
 
   override fun unaryMinus(): FNode = this
 
-  override fun plus(right: FNode): FNode = throw UnsupportedOperationException()
+  override fun plus(right: FNode): FNode = right + this
 
-  override fun minus(right: FNode): FNode = throw UnsupportedOperationException()
+  override fun minus(right: FNode): FNode = -right + this
 
   override fun times(right: FNode): FNode = when (type) {
     "" -> right
@@ -105,8 +112,15 @@ class FNodeList(val values: List<FNode>) : FAbstractNodeList {
   override fun and(right: FNode): FNode = FNodeList(values + right)
 }
 
+class FOrZero(private val inner: FNode): FNode {
+  override fun calculate(): Decimal = when (val value = inner.calculate()) {
+    is NanDecimal -> Decimal.ZERO
+    else -> value
+  }
+}
+
 object Formula {
-  private val PATTERN = "[+-]?([0-9]*[.])?[0-9]+|\\(|\\)|,|\\+|-|\\*|/|&?([A-Za-z_])+|&?([ЁёА-я_])+|&?\"([A-Za-z _])+\"|&?\"([ЁёА-я _])+\"".toRegex()
+  private val PATTERN = "[+-]?([0-9]*[.])?[0-9]+|\\(|\\)|,|\\?|\\+|-|\\*|/|&?([A-Za-z_])+|&?([ЁёА-я_])+|&?\"([A-Za-z _])+\"|&?\"([ЁёА-я _])+\"".toRegex()
 
   operator fun invoke(value: String, context: (String) -> List<Decimal>): FNode {
     if (value.isBlank()) {
@@ -139,6 +153,7 @@ object Formula {
           "/" -> action = { a, b -> a / b }
 
           "," -> action = { a, b -> a and b }
+          "?" -> result = result.orZero()
 
           "MIN" -> result = action(result, parse(1).min())
           "MAX" -> result = action(result, parse(1).max())
