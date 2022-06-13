@@ -177,7 +177,7 @@ class Context(map: Map<String, List<Decimal>>) : ((String) -> List<Decimal>) {
 
   override fun invoke(value: String): List<Decimal> =
     when {
-      value == "_" -> attributes.values.flatten()
+      value == "_" -> attributes.values.flatten().filter { it !is NanDecimal }
       value.startsWith("&") ->
         value
           .substring(1)
