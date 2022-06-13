@@ -60,7 +60,12 @@ class ItemView(
             it.isAutoWidth = true
           }
           tree.addColumn { item ->
-            item.compacted().mapNotNull { it.rate() }.filter { it.isNotBlank() }.joinToString()
+            val rates = item.compacted().mapNotNull { it.rate() }.filter { it.isNotBlank() }.distinct().toList()
+            if (rates.size == 1) {
+              rates.joinToString()
+            } else {
+              rates.filter { it != "0" }.joinToString()
+            }
           }.also {
             it.width = "10em"
             it.flexGrow = 0

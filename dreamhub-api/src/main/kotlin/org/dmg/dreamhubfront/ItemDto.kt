@@ -126,11 +126,15 @@ class AttributeDto {
   fun showValues() = values to (inherited ?: mutableListOf())
 
   operator fun plusAssign(right: ValueDto) {
-    val left = comboValues()[0]
-    when {
-      left.primitive != null -> {} //do nothing
-      right.primitive != null -> inherited = mutableListOf(right)
-      else -> !left.item()!! += !right.item()!!
+    if (comboValues().isEmpty()) {
+      inherited = mutableListOf(right)
+    } else {
+      val left = comboValues()[0]
+      when {
+        left.primitive != null -> {} //do nothing
+        right.primitive != null -> inherited = mutableListOf(right)
+        else -> !left.item()!! += !right.item()!!
+      }
     }
   }
 

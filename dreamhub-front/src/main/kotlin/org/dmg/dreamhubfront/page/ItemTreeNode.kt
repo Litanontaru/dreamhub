@@ -7,6 +7,7 @@ import org.dmg.dreamhubfront.feign.ItemApi
 import org.dmg.dreamhubfront.formula.NanDecimal
 import org.dmg.dreamhubfront.formula.formula
 import org.dmg.dreamhubfront.formula.rate
+import org.dmg.dreamhubfront.formula.sum
 
 abstract class ItemTreeNode(
   val parent: ItemTreeNode?,
@@ -418,6 +419,8 @@ class ItemAttributeNode(
   readOnly: Boolean,
 ) : ItemTreeNode(parent, readOnly) {
   override fun name() = metadataDto.attributeName
+
+  override fun rate() = (values + inherited).mapNotNull { it.item()?.rate() }.sum().toString()
 
   override fun hasChildren() =
     values.isNotEmpty() || inherited.isNotEmpty()
