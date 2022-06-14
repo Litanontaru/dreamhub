@@ -15,23 +15,23 @@ abstract class ItemTreeNode(
 ) {
   private var cHas: Boolean? = null
   private var cCount: Int? = null
-  private var cChilddren: List<ItemTreeNode>? = null
+  private var cChildren: List<ItemTreeNode>? = null
 
   abstract fun name(): String?
   open fun rate(): String? = null
 
   fun cacheHasChildren(): Boolean = cHas ?: hasChildren().also { cHas = it }
   protected abstract fun hasChildren(): Boolean
-  fun cachedChildren(): List<ItemTreeNode> = cChilddren ?: children().also { cChilddren = it }
+  fun cachedChildren(): List<ItemTreeNode> = cChildren ?: children().also { cChildren = it }
   protected abstract fun children(): List<ItemTreeNode>
   fun cachedCount(): Int = cCount ?: count().also { cCount = it }
   protected abstract fun count(): Int
 
   open fun canCompact(): Boolean = false
 
-  fun add(value: ItemName) = inAdd(value).also { cHas = null }.also { cChilddren = null }.also { cCount = null }
-  fun create(value: ItemName) = inCreate(value).also { cHas = null }.also { cChilddren = null }.also { cCount = null }
-  fun remove(node: ItemTreeNode) = inRemove(node).also { cHas = null }.also { cChilddren = null }.also { cCount = null }
+  fun add(value: ItemName) = inAdd(value).also { cHas = null }.also { cChildren = null }.also { cCount = null }
+  fun create(value: ItemName) = inCreate(value).also { cHas = null }.also { cChildren = null }.also { cCount = null }
+  fun remove(node: ItemTreeNode) = inRemove(node).also { cHas = null }.also { cChildren = null }.also { cCount = null }
   open fun inAdd(value: ItemName): Unit = throw UnsupportedOperationException()
   open fun inCreate(value: ItemName): Unit = throw UnsupportedOperationException()
   open fun inRemove(node: ItemTreeNode): Unit = throw UnsupportedOperationException()
@@ -55,7 +55,7 @@ abstract class ItemTreeNode(
   fun compacted(): Sequence<ItemTreeNode> {
     var node = this
     var result = sequenceOf(node)
-    while (node.canCompact() && node.hasChildren()) {
+    while (node.canCompact() && node.cacheHasChildren()) {
       try {
         node = node.cachedChildren()[0]
         result += node
@@ -84,7 +84,9 @@ abstract class ItemDtoTreeNode(
     }
   }
 
-  override fun hasChildren(): Boolean = count() > 0
+  override fun hasChildren(): Boolean = cachedCount() > 0
+
+  override fun count(): Int = cachedChildren().size
 
   fun childrenAttributes(): List<ItemTreeNode> {
     val children = mutableListOf<ItemTreeNode>()
@@ -106,7 +108,7 @@ abstract class ItemDtoTreeNode(
 
   fun attributesCount(): Int = itemDto.superMetadata().count()
 
-  override fun canCompact() = count() == 1
+  override fun canCompact() = cachedCount() == 1
 
   override fun types() = listOf(TYPE)
 
@@ -141,8 +143,6 @@ class MainItemDtoTreeNode(
         childrenAttributes() +
         itemDto.metadata.map { MetadataNode(itemDto, it, itemApi, this, false) }
 
-  override fun count(): Int = 5 + attributesCount() + itemDto.metadata.size
-
   override fun inAdd(value: ItemName) {
     val metadataDto = MetadataDto().apply { attributeName = value.name }
     itemApi.addMetadata(itemDto.id, metadataDto)
@@ -166,13 +166,6 @@ open class ValueItemDtoTreeNode(
   parent: ItemTreeNode?,
   readOnly: Boolean,
 ) : ItemDtoTreeNode(itemDto, itemApi, parent, readOnly) {
-  override fun count(): Int = attributesCount().let {
-    when {
-      itemDto.nonFinalExtends().count() > 0 -> 1 + it
-      else -> it
-    }
-  }
-
   override fun children(): List<ItemTreeNode> = childrenAttributes().let {
     when {
       itemDto.nonFinalExtends().count() > 0 -> listOf(ExtendsNode(itemDto, itemApi, this, readOnly)) + it
@@ -188,13 +181,6 @@ class ReferenceItemDtoTreeNode(
   parent: ItemTreeNode?,
   readOnly: Boolean,
 ) : ValueItemDtoTreeNode(itemDto, itemApi, index, parent, readOnly) {
-  override fun count(): Int = attributesCount().let {
-    when {
-      itemDto is ItemDto && itemDto.isFinal -> it
-      else -> 1 + it
-    }
-  }
-
   override fun children(): List<ItemTreeNode> = childrenAttributes().let {
     when {
       itemDto is ItemDto && itemDto.isFinal -> it
