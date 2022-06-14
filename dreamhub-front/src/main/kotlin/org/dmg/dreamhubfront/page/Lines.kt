@@ -63,9 +63,9 @@ object Lines {
     is ItemDtoTreeNode -> ItemDtoLine(node)
     is ValueNode -> when (node.types().first()) {
       STRING -> StringLine(node, "25em")
-      POSITIVE -> StringLine(node, "25em") { it.toIntOrNull()?.takeIf { it > 0L }?.toString() ?: "" }
-      INT -> StringLine(node, "25em") { it.toIntOrNull()?.toString() ?: "" }
-      DECIMAL -> StringLine(node, "25em") { it.toDecimalOrNull()?.toString() ?: "" }
+      POSITIVE -> StringLine(node, "6em") { it.toIntOrNull()?.takeIf { it > 0L }?.toString() ?: "" }
+      INT -> StringLine(node, "6em") { it.toIntOrNull()?.toString() ?: "" }
+      DECIMAL -> StringLine(node, "6em") { it.toDecimalOrNull()?.toString() ?: "" }
       BOOLEAN -> BooleanLine(node)
       else -> throw UnsupportedOperationException("Unknown type ${node.types().first()}")
     }
