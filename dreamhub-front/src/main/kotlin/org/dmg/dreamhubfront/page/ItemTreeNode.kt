@@ -13,17 +13,29 @@ abstract class ItemTreeNode(
   val parent: ItemTreeNode?,
   val readOnly: Boolean,
 ) {
+  private var cHas: Boolean? = null
+  private var cCount: Int? = null
+  private var cChilddren: List<ItemTreeNode>? = null
+
   abstract fun name(): String?
   open fun rate(): String? = null
 
-  abstract fun hasChildren(): Boolean
-  abstract fun children(): List<ItemTreeNode>
-  abstract fun count(): Int
+  fun cacheHasChildren(): Boolean = cHas ?: hasChildren().also { cHas = it }
+  protected abstract fun hasChildren(): Boolean
+  fun cachedChildren(): List<ItemTreeNode> = cChilddren ?: children().also { cChilddren = it }
+  protected abstract fun children(): List<ItemTreeNode>
+  fun cachedCount(): Int = cCount ?: count().also { cCount = it }
+  protected abstract fun count(): Int
+
   open fun canCompact(): Boolean = false
 
-  open fun add(value: ItemName): Unit = throw UnsupportedOperationException()
-  open fun create(value: ItemName): Unit = throw UnsupportedOperationException()
-  open fun remove(node: ItemTreeNode): Unit = throw UnsupportedOperationException()
+  fun add(value: ItemName) = inAdd(value).also { cHas = null }.also { cChilddren = null }.also { cCount = null }
+  fun create(value: ItemName) = inCreate(value).also { cHas = null }.also { cChilddren = null }.also { cCount = null }
+  fun remove(node: ItemTreeNode) = inRemove(node).also { cHas = null }.also { cChilddren = null }.also { cCount = null }
+  open fun inAdd(value: ItemName): Unit = throw UnsupportedOperationException()
+  open fun inCreate(value: ItemName): Unit = throw UnsupportedOperationException()
+  open fun inRemove(node: ItemTreeNode): Unit = throw UnsupportedOperationException()
+
   open fun types(): List<ItemName> = throw UnsupportedOperationException()
   open fun isSingle(): Boolean = true
   open fun allowNested(): Boolean = false
@@ -35,7 +47,7 @@ abstract class ItemTreeNode(
   fun last(): ItemTreeNode {
     var node = this
     while (node.canCompact()) {
-      node = node.children()[0]
+      node = node.cachedChildren()[0]
     }
     return node
   }
@@ -45,7 +57,7 @@ abstract class ItemTreeNode(
     var result = sequenceOf(node)
     while (node.canCompact() && node.hasChildren()) {
       try {
-        node = node.children()[0]
+        node = node.cachedChildren()[0]
         result += node
       } catch (e: Exception) {
         println()
@@ -63,7 +75,7 @@ abstract class ItemDtoTreeNode(
 ) : ItemTreeNode(parent, readOnly) {
   fun id(): Long = itemDto.id
 
-  override fun name() = null
+  override fun name() = itemDto.id.toString()
 
   override fun rate() = itemDto.rate()?.let {
     when (it) {
@@ -131,13 +143,13 @@ class MainItemDtoTreeNode(
 
   override fun count(): Int = 5 + attributesCount() + itemDto.metadata.size
 
-  override fun add(value: ItemName) {
+  override fun inAdd(value: ItemName) {
     val metadataDto = MetadataDto().apply { attributeName = value.name }
     itemApi.addMetadata(itemDto.id, metadataDto)
     itemDto.metadata.add(metadataDto)
   }
 
-  override fun remove(node: ItemTreeNode) {
+  override fun inRemove(node: ItemTreeNode) {
     when (node) {
       is MetadataNode -> {
         itemApi.removeMetadata(itemDto.id, node.name())
@@ -311,13 +323,13 @@ class ExtendsNode(
 
   override fun count() = extends().count()
 
-  override fun add(value: ItemName) {
+  override fun inAdd(value: ItemName) {
     itemApi
       .addExtends(itemDto.id, itemDto.nestedId, value.id)
       .let { parent?.setAsPrimitive(it) }
   }
 
-  override fun remove(node: ItemTreeNode) {
+  override fun inRemove(node: ItemTreeNode) {
     when (node) {
       is ItemDtoTreeNode -> {
         itemApi
@@ -346,12 +358,12 @@ class AllowedExtensionsNode(
 
   override fun count(): Int = itemDto.allowedExtensions.size
 
-  override fun add(value: ItemName) {
+  override fun inAdd(value: ItemName) {
     itemApi.addAllowedExtensions(itemDto.id, value.id)
     itemDto.allowedExtensions.add(value)
   }
 
-  override fun remove(node: ItemTreeNode) {
+  override fun inRemove(node: ItemTreeNode) {
     when (node) {
       is ItemNameNode -> {
         itemApi.removeAllowedExtensions(itemDto.id, node.id())
@@ -428,7 +440,7 @@ class ItemAttributeNode(
   fun hasOwnValue() = values.isNotEmpty()
 
   override fun children(): List<ItemTreeNode> =
-    values.withIndex().mapNotNull { valueToNode(it.value, it.index, readOnly) } +  inherited.mapNotNull { valueToNode(it, -2, true) }
+    values.withIndex().mapNotNull { valueToNode(it.value, it.index, readOnly) } + inherited.mapNotNull { valueToNode(it, -2, true) }
 
   private fun valueToNode(v: ValueDto, i: Int, readOnly: Boolean) =
     (v.terminal?.item?.let { ReferenceItemDtoTreeNode(it, itemApi, i, this, readOnly) }
@@ -439,19 +451,19 @@ class ItemAttributeNode(
 
   override fun canCompact() = metadataDto.isSingle
 
-  override fun add(value: ItemName) {
+  override fun inAdd(value: ItemName) {
     if (itemApi.get(value.id).isAbstract()) {
-      create(value)
+      inCreate(value)
     } else {
       itemApi.addAttributeTerminalValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, value.id).also { values.add(it) }
     }
   }
 
-  override fun create(value: ItemName) {
+  override fun inCreate(value: ItemName) {
     itemApi.addAttributeNestedValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, value.id).also { values.add(it) }
   }
 
-  override fun remove(node: ItemTreeNode) {
+  override fun inRemove(node: ItemTreeNode) {
     when (node) {
       is ValueItemDtoTreeNode -> {
         itemApi.removeAttributeValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, node.index)
