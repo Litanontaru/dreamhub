@@ -1,6 +1,7 @@
 package org.dmg.dreamhubfront.page
 
 import com.vaadin.flow.component.Component
+import com.vaadin.flow.component.Html
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.checkbox.Checkbox
 import com.vaadin.flow.component.combobox.ComboBox
@@ -90,14 +91,15 @@ class ComponentLineElement(vararg components: Component) : LineElement {
   override fun toComponents(): List<Component> = list
 }
 
-class StringLineElement(private val value: String) : LineElement {
-  override fun concat(right: LineElement): List<LineElement> = when (right) {
-    is StringLineElement -> listOf(StringLineElement("$value ${right.value}"))
+class StringLineElement(private val value: String, private val readOnly: Boolean = false) : LineElement {
+  override fun concat(right: LineElement): List<LineElement> = when {
+    right is StringLineElement && readOnly == right.readOnly -> listOf(StringLineElement("$value ${right.value}", readOnly))
     else -> listOf(this, right)
   }
 
   override fun toComponents(): List<Component> = when {
     value.isBlank() -> listOf()
+    readOnly -> listOf(Html("<em>$value </em>"))
     else -> listOf(Label(value))
   }
 }
@@ -128,7 +130,7 @@ class StringLine(private val item: ItemTreeNode, private val editWidth: String, 
 
       listOf(StringLineElement("${item.name()}: "), ComponentLineElement(editField))
     } else {
-      listOf(StringLineElement("${item.name()}: $initial"))
+      listOf(StringLineElement("${item.name()}: $initial", item.readOnly))
     }
   }
 }
@@ -145,7 +147,7 @@ class BooleanLine(private val item: ValueNode) : EditableLine() {
 
       listOf(StringLineElement("${item.name()}: "), ComponentLineElement(editField))
     } else {
-      listOf(StringLineElement("${item.name()}: ${if (initial) "Да" else "Нет"}"))
+      listOf(StringLineElement("${item.name()}: ${if (initial) "Да" else "Нет"}", item.readOnly))
     }
   }
 }
@@ -203,8 +205,8 @@ class MetadataLine(private val item: MetadataNode) : EditableLine() {
       listOf(StringLineElement(item.name()), ComponentLineElement(editType, isSingle, allowCreate, allowReference, isRequired, removeButton))
     } else {
       names[item.getAsPrimitive().typeId]
-        ?.let { listOf(StringLineElement("${item.name()}: $it")) }
-        ?: listOf(StringLineElement("${item.name()}: ---"))
+        ?.let { listOf(StringLineElement("${item.name()}: $it", item.readOnly)) }
+        ?: listOf(StringLineElement("${item.name()}: ---", item.readOnly))
     }
   }
 }
@@ -218,7 +220,7 @@ class ItemNameLine(private val item: ItemTreeNode) : EditableLine() {
       }
       listOf(StringLineElement("${item.name()}"), ComponentLineElement(removeButton))
     } else {
-      listOf(StringLineElement("${item.name()}"))
+      listOf(StringLineElement("${item.name()}", item.readOnly))
     }
   }
 }
@@ -233,7 +235,7 @@ class ReferenceLine(private val item: ItemTreeNode) : EditableLine() {
       }
       listOf(StringLineElement(name), ComponentLineElement(removeButton))
     } else {
-      listOf(StringLineElement(name))
+      listOf(StringLineElement(name, item.readOnly))
     }
   }
 }
@@ -256,7 +258,7 @@ class ItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
       }
       listOf(ComponentLineElement(editField, removeButton))
     } else {
-      listOf(StringLineElement(name))
+      listOf(StringLineElement(name, item.readOnly))
     }
   }
 }
@@ -282,7 +284,7 @@ class MainItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
 
       listOf(ComponentLineElement(editField, addButton))
     } else {
-      listOf(StringLineElement(name))
+      listOf(StringLineElement(name, item.readOnly))
     }
   }
 }
@@ -340,7 +342,7 @@ open class RefLine(private val item: ItemTreeNode) : EditableLine() {
         }
       }
     } else {
-      listOf(StringLineElement(name))
+      listOf(StringLineElement(name, item.readOnly))
     }
   }
 }
