@@ -62,7 +62,7 @@ object Lines {
     is ReferenceItemDtoTreeNode -> ReferenceLine(node)
     is ItemDtoTreeNode -> ItemDtoLine(node)
     is ValueNode -> when (node.types().first()) {
-      STRING -> StringLine(node, "25em")
+      STRING -> StringLine(node, "35em")
       POSITIVE -> StringLine(node, "6em") { it.toIntOrNull()?.takeIf { it > 0L }?.toString() ?: "" }
       INT -> StringLine(node, "6em") { it.toIntOrNull()?.toString() ?: "" }
       DECIMAL -> StringLine(node, "6em") { it.toDecimalOrNull()?.toString() ?: "" }
@@ -137,7 +137,11 @@ class StringLine(private val item: ItemTreeNode, private val editWidth: String, 
 
 class BooleanLine(private val item: ValueNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
-    val initial = item.getAsPrimitive() as Boolean
+    val (initial, default) = when (val i = item.getAsPrimitive()) {
+      is Boolean -> i to false
+      is Pair<*, *> -> (i.first?.toString()?.toBoolean() ?: false) to (i.second?.toString()?.toBoolean() ?: false)
+      else -> false to false
+    }
     return if (editing) {
       val editField = Checkbox().apply {
         value = initial

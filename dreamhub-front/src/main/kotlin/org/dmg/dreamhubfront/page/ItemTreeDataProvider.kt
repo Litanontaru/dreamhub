@@ -21,23 +21,20 @@ class ItemTreeDataProvider(
   val root = MainItemDtoTreeNode(itemDto, itemApi)
 
   override fun getChildCount(query: HierarchicalQuery<ItemTreeNode, Any>?): Int {
-    val t = System.nanoTime()
-    val result= query?.parent?.compacted()?.last()?.cachedCount() ?: 1
-    println("count\t${query?.parent?.name()}\t${System.nanoTime() - t}")
-    return result
+    return track("count\t${query?.parent?.name()}") {
+      query?.parent?.compacted()?.last()?.cachedCount() ?: 1
+    }
   }
 
   override fun hasChildren(node: ItemTreeNode?): Boolean {
-    val t = System.nanoTime()
-    val result = node?.compacted()?.last()?.cacheHasChildren() ?: true
-    println("has\t${node?.name()}\t${System.nanoTime() - t}")
-    return result
+    return track("has\t${node?.name()}") {
+      node?.compacted()?.last()?.cacheHasChildren() ?: true
+    }
   }
 
   override fun fetchChildrenFromBackEnd(query: HierarchicalQuery<ItemTreeNode, Any>?): Stream<ItemTreeNode> {
-    val t = System.nanoTime()
-    val result: Stream<ItemTreeNode> = query?.parent?.compacted()?.last()?.cachedChildren()?.stream() ?: Stream.of(root)
-    println("fetch\t${query?.parent?.name()}\t${System.nanoTime() - t}")
-    return result
+    return track("fetch\t${query?.parent?.name()}") {
+      query?.parent?.compacted()?.last()?.cachedChildren()?.stream() ?: Stream.of(root)
+    }
   }
 }

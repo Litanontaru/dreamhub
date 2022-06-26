@@ -76,7 +76,7 @@ open class AbstractItemDto : ItemName() {
           it.name = meta.attributeName
           it.inherited = r.comboValues().toMutableList()
         })
-        meta.isSingle -> l += r.comboValues()[0]
+        meta.isSingle -> r.comboValues().takeIf { it.isNotEmpty() }?.let { l += it[0] }
         else -> l += r.comboValues()
       }
     }

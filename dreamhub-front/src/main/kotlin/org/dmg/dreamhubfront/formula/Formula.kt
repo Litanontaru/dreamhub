@@ -32,7 +32,7 @@ class FConst(private val value: Decimal) : FNode {
 }
 
 class FVar(private val value: () -> List<Decimal>) : FAbstractNodeList {
-  override fun calculate() = value().first()
+  override fun calculate() = value().firstOrNull() ?: NanDecimal
 
   override fun values(): List<FNode> = value().map { FConst(it) }
 }

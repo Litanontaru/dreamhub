@@ -92,5 +92,9 @@ fun String.toDecimalOrNull(): Decimal? =
     ?.takeIf { it.size <= 2 }
     ?.let { parts ->
       val type = if (parts.size == 1) "" else parts[1]
-      parts[0].toBigDecimalOrNull()?.let { Decimal(it, type) }
+      when (parts[0]) {
+        "false" -> Decimal(BigDecimal.ZERO, type)
+        "true" -> Decimal(BigDecimal.ONE, type)
+        else -> parts[0].toBigDecimalOrNull()?.let { Decimal(it, type) }
+      }
     }

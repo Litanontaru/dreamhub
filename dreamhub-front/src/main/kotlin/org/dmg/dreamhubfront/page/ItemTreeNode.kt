@@ -9,6 +9,13 @@ import org.dmg.dreamhubfront.formula.formula
 import org.dmg.dreamhubfront.formula.rate
 import org.dmg.dreamhubfront.formula.sum
 
+fun <T> track(title: String, action: () -> T): T {
+//  val nanoTime = System.nanoTime()
+  val result = action()
+//  println("$title\t${System.nanoTime() - nanoTime}")
+  return result
+}
+
 abstract class ItemTreeNode(
   val parent: ItemTreeNode?,
   val readOnly: Boolean,
@@ -77,10 +84,12 @@ abstract class ItemDtoTreeNode(
 
   override fun name() = itemDto.id.toString()
 
-  override fun rate() = itemDto.rate()?.let {
-    when (it) {
-      is NanDecimal -> itemDto.formula()
-      else -> it.toString()
+  override fun rate() = track("rate\t${itemDto.id}/${itemDto.nestedId}") {
+    itemDto.rate()?.let {
+      when (it) {
+        is NanDecimal -> itemDto.formula()
+        else -> it.toString()
+      }
     }
   }
 
@@ -88,25 +97,18 @@ abstract class ItemDtoTreeNode(
 
   override fun count(): Int = cachedChildren().size
 
-  fun childrenAttributes(): List<ItemTreeNode> {
-    val children = mutableListOf<ItemTreeNode>()
-
+  fun childrenAttributes(): Sequence<ItemTreeNode> {
     val attributeDtoMap = itemDto.attributes.associate { it.name to it.showValues() }
-
-    itemDto
+    return itemDto
       .superMetadata()
-      .forEach {
+      .map {
         val (value, inherited) = attributeDtoMap[it.attributeName] ?: (mutableListOf<ValueDto>() to mutableListOf<ValueDto>())
         when {
           it.typeId < -1 -> PrimitiveAttributeNode(itemDto, itemApi, it, value.firstOrNull()?.primitive, inherited.firstOrNull()?.primitive, this, readOnly)
           else -> ItemAttributeNode(itemDto, itemApi, it, value, inherited, this, readOnly)
-        }.let { children.add(it) }
+        }
       }
-
-    return children
   }
-
-  fun attributesCount(): Int = itemDto.superMetadata().count()
 
   override fun canCompact() = cachedCount() == 1
 
@@ -132,16 +134,21 @@ class MainItemDtoTreeNode(
   private val itemApi: ItemApi,
 ) : ItemDtoTreeNode(itemDto, itemApi, null, false) {
 
-  override fun children(): List<ItemTreeNode> =
-    mutableListOf(
-      FormulaNode(itemDto, itemApi, this, false),
-      IsTypeNode(itemDto, itemApi, this, false),
-      IsFinalNode(itemDto, itemApi, this, false),
-      AllowedExtensionsNode(itemDto, itemApi, this, false),
-      ExtendsNode(itemDto, itemApi, this, false)
-    ) +
-        childrenAttributes() +
-        itemDto.metadata.map { MetadataNode(itemDto, it, itemApi, this, false) }
+  override fun children(): List<ItemTreeNode> {
+    return track("all\t${itemDto.id}/${itemDto.nestedId}") {
+      val mutableListOf = track("generic\t${itemDto.id}/${itemDto.nestedId}") { sequenceOf(
+        FormulaNode(itemDto, itemApi, this, false),
+        IsTypeNode(itemDto, itemApi, this, false),
+        IsFinalNode(itemDto, itemApi, this, false),
+        AllowedExtensionsNode(itemDto, itemApi, this, false),
+        ExtendsNode(itemDto, itemApi, this, false)
+      )}
+      val childrenAttributes = track("attributes\t${itemDto.id}/${itemDto.nestedId}") { childrenAttributes() }
+      val metadataNodes = track("metadata\t${itemDto.id}/${itemDto.nestedId}") { itemDto.metadata.asSequence().map { MetadataNode(itemDto, it, itemApi, this, false) } }
+
+      track("toList\t${itemDto.id}/${itemDto.nestedId}") { (mutableListOf + childrenAttributes + metadataNodes).toList() }
+    }
+  }
 
   override fun inAdd(value: ItemName) {
     val metadataDto = MetadataDto().apply { attributeName = value.name }
@@ -169,7 +176,7 @@ open class ValueItemDtoTreeNode(
   override fun children(): List<ItemTreeNode> = childrenAttributes().let {
     when {
       itemDto.nonFinalExtends().count() > 0 -> listOf(ExtendsNode(itemDto, itemApi, this, readOnly)) + it
-      else -> it
+      else -> it.toList()
     }
   }
 }
@@ -183,7 +190,7 @@ class ReferenceItemDtoTreeNode(
 ) : ValueItemDtoTreeNode(itemDto, itemApi, index, parent, readOnly) {
   override fun children(): List<ItemTreeNode> = childrenAttributes().let {
     when {
-      itemDto is ItemDto && itemDto.isFinal -> it
+      itemDto is ItemDto && itemDto.isFinal -> it.toList()
       else -> listOf(ExtendsNode(itemDto, itemApi, this, readOnly)) + it
     }
   }
@@ -388,21 +395,24 @@ class PrimitiveAttributeNode(
 
   override fun setAsPrimitive(newValue: Any?) {
     when (newValue) {
-      is String -> {
-        if (value == null) {
-          itemApi.addAttributePrimitiveValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, newValue)
-          value = newValue
-        } else {
-          itemApi.modifyAttributePrimitiveValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, 0, newValue)
-          value = newValue
-        }
-      }
+      is String -> setAsString(newValue)
+      is Boolean -> setAsString(newValue.toString())
       null -> {
         if (value != null) {
           itemApi.removeAttributeValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, 0)
           value = null
         }
       }
+    }
+  }
+
+  private fun setAsString(newValue: String) {
+    if (value == null) {
+      itemApi.addAttributePrimitiveValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, newValue)
+      value = newValue
+    } else {
+      itemApi.modifyAttributePrimitiveValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, 0, newValue)
+      value = newValue
     }
   }
 }
