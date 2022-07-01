@@ -81,6 +81,12 @@ interface ItemController {
   @PutMapping("/items/{id}/metadata")
   fun modifyMetadata(@PathVariable id: Long, @RequestBody newMetadata: MetadataDto)
 
+  @PostMapping("/items/{id}/metadata/up")
+  fun upMetadata(@PathVariable id: Long, @RequestParam attributeName: String)
+
+  @PostMapping("/items/{id}/metadata/down")
+  fun downMetadata(@PathVariable id: Long, @RequestParam attributeName: String)
+
   //--------------------------------------------------------------------------------------------------------------------
 
   @PostMapping("/items/{id}/{nestedId}/attribute/{attributeName}/values/primitive")

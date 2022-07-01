@@ -249,6 +249,32 @@ class ItemService(
       }
   }
 
+  fun upMetadata(id: Long, attributeName: String) {
+    itemRepository
+      .findById(id)
+      .get()
+      .modify {
+        val i = it.metadata.indexOfFirst { it.attributeName == attributeName }
+        if (i > 0) {
+          it.metadata[i - 1] = it.metadata[i].apply { it.metadata[i] = it.metadata[i - 1] }
+        }
+        it.metadata
+      }
+  }
+
+  fun downMetadata(id: Long, attributeName: String) {
+    itemRepository
+      .findById(id)
+      .get()
+      .modify {
+        val i = it.metadata.indexOfFirst { it.attributeName == attributeName }
+        if (i < it.metadata.size - 1) {
+          it.metadata[i + 1] = it.metadata[i].apply { it.metadata[i] = it.metadata[i + 1] }
+        }
+        it.metadata
+      }
+  }
+
   fun addAttributeValue(id: Long, nestedId: Long, attributeName: String, newValue: ValueDto, action: (ItemDto) -> Unit = {}) {
     val item = itemRepository.findById(id).get()
     item.modify(nestedId, action) { dto ->

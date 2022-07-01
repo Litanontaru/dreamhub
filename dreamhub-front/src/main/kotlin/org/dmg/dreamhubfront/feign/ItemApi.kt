@@ -83,6 +83,14 @@ class ItemApi(private val itemController: ItemController) {
     itemController.modifyMetadata(id, newMetadata)
   }
 
+  fun upMetadata(id: Long, attributeName: String) {
+    itemController.upMetadata(id, attributeName.emptySubstitute())
+  }
+
+  fun downMetadata(id: Long, attributeName: String) {
+    itemController.downMetadata(id, attributeName.emptySubstitute())
+  }
+
   fun addAttributePrimitiveValue(id: Long, nestedId: Long = -1, attributeName: String, newValue: String): ValueDto {
     return itemController.addAttributePrimitiveValue(id, nestedId, attributeName.emptySubstitute(), newValue)
   }

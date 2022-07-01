@@ -77,6 +77,13 @@ class ItemControllerImpl(
     service.modifyMetadata(id, newMetadata)
   }
 
+  override fun upMetadata(id: Long, attributeName: String) {
+    service.upMetadata(id, attributeName.emptySubstitute())
+  }
+
+  override fun downMetadata(id: Long, attributeName: String) {
+    service.downMetadata(id, attributeName.emptySubstitute())
+  }
 
   override fun addAttributePrimitiveValue(id: Long, nestedId: Long, attributeName: String, newValue: String): ValueDto {
     return service.addAttributePrimitiveValue(id, nestedId, attributeName.emptySubstitute(), newValue)
