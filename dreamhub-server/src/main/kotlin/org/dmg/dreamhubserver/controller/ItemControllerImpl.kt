@@ -70,7 +70,7 @@ class ItemControllerImpl(
   }
 
   override fun removeMetadata(id: Long, attributeName: String) {
-    service.removeMetadata(id, attributeName)
+    service.removeMetadata(id, attributeName.emptySubstitute())
   }
 
   override fun modifyMetadata(id: Long, newMetadata: MetadataDto) {
@@ -79,22 +79,27 @@ class ItemControllerImpl(
 
 
   override fun addAttributePrimitiveValue(id: Long, nestedId: Long, attributeName: String, newValue: String): ValueDto {
-    return service.addAttributePrimitiveValue(id, nestedId, attributeName, newValue)
+    return service.addAttributePrimitiveValue(id, nestedId, attributeName.emptySubstitute(), newValue)
   }
 
   override fun addAttributeTerminalValue(id: Long, nestedId: Long, attributeName: String, newValue: Long): ValueDto {
-    return service.addAttributeTerminalValue(id, nestedId, attributeName, newValue)
+    return service.addAttributeTerminalValue(id, nestedId, attributeName.emptySubstitute(), newValue)
   }
 
   override fun addAttributeNestedValue(id: Long, nestedId: Long, attributeName: String, newValue: Long): ValueDto {
-    return service.addAttributeNestedValue(id, nestedId, attributeName, newValue)
+    return service.addAttributeNestedValue(id, nestedId, attributeName.emptySubstitute(), newValue)
   }
 
   override fun removeAttributeValue(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {
-    service.removeAttributeValue(id, nestedId, attributeName, valueIndex)
+    service.removeAttributeValue(id, nestedId, attributeName.emptySubstitute(), valueIndex)
   }
 
   override fun modifyAttributePrimitiveValue(id: Long, nestedId: Long, attributeName: String, valueIndex: Int, newValue: String): ValueDto {
-    return service.modifyAttributePrimitiveValue(id, nestedId, attributeName, valueIndex, newValue)
+    return service.modifyAttributePrimitiveValue(id, nestedId, attributeName.emptySubstitute(), valueIndex, newValue)
   }
+}
+
+fun String.emptySubstitute() = when (this) {
+  "_" -> ""
+  else -> this
 }

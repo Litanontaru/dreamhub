@@ -76,7 +76,7 @@ class ItemApi(private val itemController: ItemController) {
   }
 
   fun removeMetadata(id: Long, attributeName: String) {
-    itemController.removeMetadata(id, attributeName)
+    itemController.removeMetadata(id, attributeName.emptySubstitute())
   }
 
   fun modifyMetadata(id: Long, newMetadata: MetadataDto) {
@@ -84,22 +84,27 @@ class ItemApi(private val itemController: ItemController) {
   }
 
   fun addAttributePrimitiveValue(id: Long, nestedId: Long = -1, attributeName: String, newValue: String): ValueDto {
-    return itemController.addAttributePrimitiveValue(id, nestedId, attributeName, newValue)
+    return itemController.addAttributePrimitiveValue(id, nestedId, attributeName.emptySubstitute(), newValue)
   }
 
   fun addAttributeTerminalValue(id: Long, nestedId: Long = -1, attributeName: String, newValue: Long): ValueDto {
-    return itemController.addAttributeTerminalValue(id, nestedId, attributeName, newValue)
+    return itemController.addAttributeTerminalValue(id, nestedId, attributeName.emptySubstitute(), newValue)
   }
 
   fun addAttributeNestedValue(id: Long, nestedId: Long = -1, attributeName: String, newValue: Long): ValueDto {
-    return itemController.addAttributeNestedValue(id, nestedId, attributeName, newValue)
+    return itemController.addAttributeNestedValue(id, nestedId, attributeName.emptySubstitute(), newValue)
   }
 
   fun removeAttributeValue(id: Long, nestedId: Long = -1, attributeName: String, valueIndex: Int) {
-    itemController.removeAttributeValue(id, nestedId, attributeName, valueIndex)
+    itemController.removeAttributeValue(id, nestedId, attributeName.emptySubstitute(), valueIndex)
   }
 
   fun modifyAttributePrimitiveValue(id: Long, nestedId: Long = -1, attributeName: String, valueIndex: Int, newValue: String): ValueDto {
-    return itemController.modifyAttributePrimitiveValue(id, nestedId, attributeName, valueIndex, newValue)
+    return itemController.modifyAttributePrimitiveValue(id, nestedId, attributeName.emptySubstitute(), valueIndex, newValue)
   }
+}
+
+fun String.emptySubstitute() = when (this) {
+  "" -> "_"
+  else -> this
 }
