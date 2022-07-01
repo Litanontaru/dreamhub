@@ -3,7 +3,11 @@ package org.dmg.dreamhubfront.formula
 import org.dmg.dreamhubfront.*
 import org.dmg.dreamhubfront.formula.Formula.toFormula
 
-fun AbstractItemDto.rate(): Decimal? = formula()?.toFormula(getContext())?.calculate()
+fun AbstractItemDto.rate(): Decimal? = try {
+  formula()?.toFormula(getContext())?.calculate()
+} catch (e: Exception) {
+  NanDecimal
+}
 
 fun AbstractItemDto.getContext(): Context =
   attributes
