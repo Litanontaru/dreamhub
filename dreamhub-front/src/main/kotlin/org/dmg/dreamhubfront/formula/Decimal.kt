@@ -9,7 +9,7 @@ import java.math.RoundingMode
 open class Decimal(val value: BigDecimal, val type: String) : Comparable<Decimal> {
   open operator fun unaryMinus(): Decimal = Decimal(-value, type)
 
-  open operator fun plus(right: Decimal) = when(right) {
+  open operator fun plus(right: Decimal) = when (right) {
     is NanDecimal -> NanDecimal
     is NoneDecimal -> Decimal(value, combineTypes(right))
     else -> Decimal(value + right.value, combineTypes(right))
@@ -51,16 +51,21 @@ class NoneDecimal(type: String) : Decimal(BigDecimal.ZERO, type) {
   override fun unaryMinus() = this
 
   override operator fun times(right: Decimal) = when (right) {
+    is NanDecimal -> NanDecimal
     is NoneDecimal -> NoneDecimal(combineTypes(right))
     else -> Decimal(right.value, combineTypes(right))
   }
 
-  override fun div(right: Decimal) = Decimal(BigDecimal("1.0")/ right.value, combineTypes(right))
+  override fun div(right: Decimal) = when (right) {
+    is NanDecimal -> NanDecimal
+    is NoneDecimal -> NoneDecimal(combineTypes(right))
+    else -> Decimal(BigDecimal("1.0") / right.value, combineTypes(right))
+  }
 
   override fun toString(): String = type
 }
 
-object NanDecimal: Decimal(BigDecimal.ZERO, "") {
+object NanDecimal : Decimal(BigDecimal.ZERO, "") {
   override fun unaryMinus() = NanDecimal
 
   override fun plus(right: Decimal) = NanDecimal
@@ -80,9 +85,14 @@ fun BigDecimal.toDecimal(): Decimal = Decimal(this, "")
 
 fun Int.toDecimal(): Decimal = this.toBigDecimal().toDecimal()
 
-fun Iterable<Decimal>.sum() = fold<Decimal, Decimal>(NONE, { a, b -> a + b })
+fun Iterable<Decimal>.sum() = fold<Decimal, Decimal>(NONE) { a, b -> a + b }
 
-fun Iterable<Decimal>.sumto() = fold<Decimal, Decimal>(NONE, { a, b -> a / TWO + b })
+fun Iterable<Decimal>.sumto() = fold<Decimal, Decimal>(NONE) { a, b ->
+  when (a) {
+    is NoneDecimal -> b
+    else -> a / TWO + b
+  }
+}
 
 fun Iterable<Decimal>.prod() = fold(ONE, { a, b -> a * b })
 
