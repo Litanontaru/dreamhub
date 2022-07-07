@@ -55,6 +55,10 @@ class ItemApi(private val itemController: ItemController) {
     itemController.setIsFinal(id, newIsFinal)
   }
 
+  fun setDescription(id: Long, newDescription: String) {
+    itemController.setDescription(id, newDescription)
+  }
+
   fun addExtends(id: Long, nestedId: Long = -1, newExtendsId: Long): ItemDto {
     return itemController.addExtends(id, nestedId, newExtendsId)
   }

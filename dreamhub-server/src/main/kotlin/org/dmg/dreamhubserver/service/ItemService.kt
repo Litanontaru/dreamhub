@@ -169,6 +169,10 @@ class ItemService(
     itemRepository.findById(id).get().modify { it.isFinal = newIsFinal }
   }
 
+  fun setDescription(id: Long, newDescription: String) {
+    itemRepository.findById(id).get().modify { it.description = newDescription }
+  }
+
   fun addExtends(id: Long, nestedId: Long, newExtendsId: Long): ItemDto =
     itemRepository
       .findById(id)

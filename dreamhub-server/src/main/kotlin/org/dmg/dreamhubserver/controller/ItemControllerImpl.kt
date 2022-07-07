@@ -53,6 +53,10 @@ class ItemControllerImpl(
     service.setIsFinal(id, newIsFinal)
   }
 
+  override fun setDescription(id: Long, newDescription: String) {
+    service.setDescription(id, newDescription)
+  }
+
   override fun addExtends(id: Long, nestedId: Long, newExtendsId: Long) = service.addExtends(id, nestedId, newExtendsId)
 
   override fun removeExtends(id: Long, nestedId: Long, oldExtendsId: Long) = service.removeExtends(id, nestedId, oldExtendsId)

@@ -56,6 +56,9 @@ interface ItemController {
   @PutMapping("/items/{id}/isfinal/{newIsFinal}")
   fun setIsFinal(@PathVariable id: Long, @PathVariable newIsFinal: Boolean)
 
+  @PutMapping("/items/{id}/description")
+  fun setDescription(@PathVariable id: Long, @RequestBody newDescription: String)
+
   //--------------------------------------------------------------------------------------------------------------------
 
   @PostMapping("/items/{id}/{nestedId}/extends/{newExtendsId}")

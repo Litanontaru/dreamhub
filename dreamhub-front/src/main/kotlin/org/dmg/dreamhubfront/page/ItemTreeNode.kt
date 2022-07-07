@@ -1,6 +1,7 @@
 package org.dmg.dreamhubfront.page
 
 import org.dmg.dreamhubfront.*
+import org.dmg.dreamhubfront.StandardTypes.BOOLEAN
 import org.dmg.dreamhubfront.StandardTypes.STRING
 import org.dmg.dreamhubfront.StandardTypes.TYPE
 import org.dmg.dreamhubfront.feign.ItemApi
@@ -47,6 +48,7 @@ abstract class ItemTreeNode(
   open fun isSingle(): Boolean = true
   open fun allowNested(): Boolean = false
   open fun allowAdd(): Boolean = true
+  open fun allowMove(): Boolean = false
 
   open fun getAsPrimitive(): Any? = throw UnsupportedOperationException()
   open fun setAsPrimitive(newValue: Any?): Unit = throw UnsupportedOperationException()
@@ -140,6 +142,7 @@ class MainItemDtoTreeNode(
         FormulaNode(itemDto, itemApi, this, false),
         IsTypeNode(itemDto, itemApi, this, false),
         IsFinalNode(itemDto, itemApi, this, false),
+        DescriptionNode(itemDto, itemApi, this, false),
         AllowedExtensionsNode(itemDto, itemApi, this, false),
         ExtendsNode(itemDto, itemApi, this, false)
       )}
@@ -263,7 +266,7 @@ class IsTypeNode(
   val itemApi: ItemApi,
   parent: ItemTreeNode,
   readOnly: Boolean,
-) : ValueNode("Это тип", StandardTypes.BOOLEAN, parent, readOnly) {
+) : ValueNode("Это тип", BOOLEAN, parent, readOnly) {
   override fun getAsPrimitive() = itemDto.isType
 
   override fun setAsPrimitive(newValue: Any?) {
@@ -281,7 +284,7 @@ class IsFinalNode(
   val itemApi: ItemApi,
   parent: ItemTreeNode,
   readOnly: Boolean,
-) : ValueNode("Финальное", StandardTypes.BOOLEAN, parent, readOnly) {
+) : ValueNode("Финальное", BOOLEAN, parent, readOnly) {
   override fun getAsPrimitive() = itemDto.isFinal
 
   override fun setAsPrimitive(newValue: Any?) {
@@ -289,6 +292,24 @@ class IsFinalNode(
       is Boolean -> {
         itemApi.setIsFinal(itemDto.id, newValue)
         itemDto.isFinal = newValue
+      }
+    }
+  }
+}
+
+class DescriptionNode(
+  val itemDto: ItemDto,
+  val itemApi: ItemApi,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ValueNode("Описание", STRING, parent, readOnly) {
+  override fun getAsPrimitive() = itemDto.description
+
+  override fun setAsPrimitive(newValue: Any?) {
+    when (newValue) {
+      is String -> {
+        itemApi.setDescription(itemDto.id, newValue)
+        itemDto.description = newValue
       }
     }
   }

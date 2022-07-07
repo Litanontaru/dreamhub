@@ -91,6 +91,7 @@ class ItemDto : AbstractItemDto() {
   var formula: String = ""
   var isType: Boolean = false
   var isFinal: Boolean = false
+  var description: String = ""
 
   override fun mainAllowedExtensions() = allowedExtensions
 
