@@ -158,7 +158,7 @@ class BooleanLine(private val item: ValueNode) : EditableLine() {
 
 class MetadataLine(private val item: MetadataNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
-    val names = (this.itemApi.getAllTypes(settingId) + StandardTypes.ALL)
+    val names = (this.itemApi.getAllTypes(settingId).sortedBy { it.name } + StandardTypes.ALL)
       .associate { it.id to it.name }
 
     return if (editing && !item.readOnly) {
