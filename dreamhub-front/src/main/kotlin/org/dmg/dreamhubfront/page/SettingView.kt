@@ -103,9 +103,35 @@ class SettingView(
             }.open()
           }
 
+          val renameFolder = addItem("Переименовать папку") {
+            val item = it.item.get()
+            EditDialog("Имя папки", item.name) { newName ->
+              val length = item.path.length + 1 + item.name.length
+              val newPath = item.path + "." + newName
+
+              fun recursiveChildren(subItem : ItemListView): Sequence<ItemListDto> {
+                return (if (subItem.isFolder) {
+                  dataProvider.children(subItem)?.flatMap { recursiveChildren(it) }?.asSequence()
+                } else {
+                  subItem.item?.let { sequenceOf(it) }
+                })
+                  ?: emptySequence()
+              }
+
+              recursiveChildren(item)
+                .forEach {
+                  itemApi.setPath(it.id, newPath + it.path.substring(length))
+                  it.path = newName
+                }
+
+              item.name = newName
+            }.open()
+          }
+
           dynamicContentHandler = SerializablePredicate {
             delete.isVisible = it != null
             move.isVisible = it != null && !it.isFolder
+            renameFolder.isVisible =  it != null && it.isFolder
 
             true
           }

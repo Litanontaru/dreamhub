@@ -79,13 +79,14 @@ class ItemsTreeDataProvider(
 
   override fun hasChildren(item: ItemListView?): Boolean = item?.isFolder ?: false
 
-  override fun fetchChildrenFromBackEnd(query: HierarchicalQuery<ItemListView, Any>?): Stream<ItemListView> =
-    (query?.parent ?: root).let {
-      tree[it]
-        ?.sortedWith(compareByDescending<ItemListView> { it.isFolder }.thenBy { it.name } )
-        ?.stream()
-        ?: Stream.empty()
-    }
+   override fun fetchChildrenFromBackEnd(query: HierarchicalQuery<ItemListView, Any>?): Stream<ItemListView> =
+    (query?.parent ?: root)
+      .let { children(it) }
+      ?.sortedWith(compareByDescending<ItemListView> { it.isFolder }.thenBy { it.name } )
+      ?.stream()
+      ?: Stream.empty()
+
+  fun children(it: ItemListView) = tree[it]
 
   fun add(item: ItemListDto) {
     val chain = item
@@ -114,7 +115,7 @@ class ItemsTreeDataProvider(
   }
 }
 
-data class ItemListView(val name: String, val path: String, val item: ItemListDto? = null) {
+data class ItemListView(var name: String, var path: String, val item: ItemListDto? = null) {
   val isFolder: Boolean = item == null
   val fullName = path.takeIf { it.isNotBlank() }?.let { "$it.$name" } ?: name
 }
