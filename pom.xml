@@ -16,6 +16,11 @@
 
     <packaging>pom</packaging>
 
+    <properties>
+        <java.version>11</java.version>
+        <kotlin.version>1.7.0-Beta</kotlin.version>
+    </properties>
+
     <modules>
         <module>dreamhub-server</module>
         <module>dreamhub-api</module>

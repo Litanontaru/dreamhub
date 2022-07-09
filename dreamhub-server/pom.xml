@@ -12,10 +12,6 @@
 	<name>dreamhub-server</name>
 	<description>Project to manage setting in dream 3</description>
 
-	<properties>
-		<java.version>11</java.version>
-		<kotlin.version>1.6.21</kotlin.version>
-	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.dmg</groupId>

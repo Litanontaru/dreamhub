@@ -12,8 +12,6 @@
     <artifactId>dreamhub-front</artifactId>
 
     <properties>
-        <java.version>11</java.version>
-        <kotlin.version>1.7.0-Beta</kotlin.version>
         <vaadin.version>23.0.8</vaadin.version>
     </properties>
 
