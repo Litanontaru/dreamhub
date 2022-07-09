@@ -44,7 +44,7 @@ class ItemApi(private val itemController: ItemController) {
   }
 
   fun setFormula(id: Long, newFormula: String) {
-    itemController.setFormula(id, newFormula)
+    itemController.setFormula(id, newFormula.emptySubstitute())
   }
 
   fun setIsType(id: Long, newIsType: Boolean) {
@@ -117,6 +117,6 @@ class ItemApi(private val itemController: ItemController) {
 }
 
 fun String.emptySubstitute() = when (this) {
-  "" -> "_"
+  "" -> "__"
   else -> this
 }

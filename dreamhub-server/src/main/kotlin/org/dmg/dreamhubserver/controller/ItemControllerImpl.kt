@@ -42,7 +42,7 @@ class ItemControllerImpl(
   }
 
   override fun setFormula(id: Long, newFormula: String) {
-    service.setFormula(id, newFormula)
+    service.setFormula(id, newFormula.emptySubstitute())
   }
 
   override fun setIsType(id: Long, newIsType: Boolean) {
@@ -111,6 +111,6 @@ class ItemControllerImpl(
 }
 
 fun String.emptySubstitute() = when (this) {
-  "_" -> ""
+  "__" -> ""
   else -> this
 }
