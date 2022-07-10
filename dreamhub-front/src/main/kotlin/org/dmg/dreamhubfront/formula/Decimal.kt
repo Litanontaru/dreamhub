@@ -34,10 +34,15 @@ open class Decimal(val value: BigDecimal, val type: String) : Comparable<Decimal
 
   fun setScale(newScale: Int, roundingMode: RoundingMode): Decimal = Decimal(value.setScale(newScale, roundingMode), type)
 
-  override fun toString(): String = when {
-    type.isBlank() -> "$value"
-    else -> "$value $type"
-  }
+  override fun toString(): String = value
+    .stripTrailingZeros()
+    .toPlainString()
+    .let {
+      when {
+        type.isBlank() -> it
+        else -> "$it $type"
+      }
+    }
 
   companion object {
     val NONE = NoneDecimal("")
