@@ -122,9 +122,19 @@ class AttributeDto {
 
   var inherited: MutableList<ValueDto>? = null
 
-  fun comboValues(): List<ValueDto> = inherited?.let { values.toList() + it } ?: values.toList()
+  fun comboValues(): List<ValueDto> = inherited?.let { values.toList() + noShadowedInherited()!! } ?: values.toList()
 
-  fun showValues() = values to (inherited ?: mutableListOf())
+  fun noShadowedInherited() =
+    inherited
+      ?.let {
+        values
+          .mapNotNull { it.item() }
+          .map { it.name }
+          .toSet()
+          .let { names -> it.asSequence().filter { it.item()?.let { it.name !in names } ?: true }.toMutableList() }
+      }
+
+  fun showValues() = values to (noShadowedInherited() ?: mutableListOf())
 
   operator fun plusAssign(right: ValueDto) {
     if (comboValues().isEmpty()) {
