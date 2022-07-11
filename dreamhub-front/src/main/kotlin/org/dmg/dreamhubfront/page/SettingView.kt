@@ -82,6 +82,13 @@ class SettingView(
             }.open()
           }
 
+          val copy = addItem("Копировать") {
+            val item = it.item.get()
+            if (!item.isFolder) {
+              itemApi.copy(item.item!!.id)
+            }
+          }
+
           val delete = addItem("Удалить") {
             val item = it.item.get()
             if (item.isFolder) {
@@ -129,6 +136,7 @@ class SettingView(
           }
 
           dynamicContentHandler = SerializablePredicate {
+            copy.isVisible = it != null && !it.isFolder
             delete.isVisible = it != null
             move.isVisible = it != null && !it.isFolder
             renameFolder.isVisible =  it != null && it.isFolder

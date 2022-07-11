@@ -36,6 +36,9 @@ interface ItemController {
   @DeleteMapping("/items/{id}")
   fun remove(@PathVariable id: Long)
 
+  @PostMapping("/items/{id}/copy")
+  fun copy(@PathVariable id: Long): ItemDto
+
   //--------------------------------------------------------------------------------------------------------------------
 
   @PutMapping("/items/{id}/{nestedId}/name")

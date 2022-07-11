@@ -102,6 +102,12 @@ class ItemService(
     itemRepository.deleteById(id)
   }
 
+  fun copy(id: Long): ItemDto {
+    return add(itemRepository.getDefinitionById(id).toDto().also {
+      it.name = it.name + " Копия"
+    })
+  }
+
   private fun Item.modify(action: (ItemDto) -> Unit) {
     definition = definition.toDto().also { action(it) }.toJson()
   }

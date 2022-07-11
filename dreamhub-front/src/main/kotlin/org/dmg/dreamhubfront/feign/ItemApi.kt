@@ -31,6 +31,10 @@ class ItemApi(private val itemController: ItemController) {
     itemController.remove(id)
   }
 
+  fun copy(id: Long): ItemDto {
+    return itemController.copy(id)
+  }
+
   fun setName(id: Long, nestedId: Long = -1, newName: String) {
     itemController.setName(id, nestedId, newName)
   }
