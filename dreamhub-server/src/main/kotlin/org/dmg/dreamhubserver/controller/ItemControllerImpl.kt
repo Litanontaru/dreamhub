@@ -110,6 +110,14 @@ class ItemControllerImpl(
   override fun modifyAttributePrimitiveValue(id: Long, nestedId: Long, attributeName: String, valueIndex: Int, newValue: String): ValueDto {
     return service.modifyAttributePrimitiveValue(id, nestedId, attributeName.emptySubstitute(), valueIndex, newValue)
   }
+
+  override fun moveAttributeUp(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {
+    return service.moveAttributeUp(id, nestedId, attributeName.emptySubstitute(), valueIndex)
+  }
+
+  override fun moveAttributeDown(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {
+    return service.moveAttributeDown(id, nestedId, attributeName.emptySubstitute(), valueIndex)
+  }
 }
 
 fun String.emptySubstitute() = when (this) {

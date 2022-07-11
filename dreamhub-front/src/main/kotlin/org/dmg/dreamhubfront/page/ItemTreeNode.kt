@@ -23,7 +23,7 @@ abstract class ItemTreeNode(
 ) {
   private var cHas: Boolean? = null
   private var cCount: Int? = null
-  private var cChildren: List<ItemTreeNode>? = null
+  protected var cChildren: List<ItemTreeNode>? = null
 
   abstract fun name(): String?
   open fun rate(): String? = null
@@ -76,6 +76,11 @@ abstract class ItemTreeNode(
   }
 }
 
+interface MovableItem {
+  fun moveUp(node: ItemTreeNode)
+  fun moveDown(node: ItemTreeNode)
+}
+
 abstract class ItemDtoTreeNode(
   private var itemDto: AbstractItemDto,
   private val itemApi: ItemApi,
@@ -107,7 +112,8 @@ abstract class ItemDtoTreeNode(
         val (value, inherited) = attributeDtoMap[it.attributeName] ?: (mutableListOf<ValueDto>() to mutableListOf<ValueDto>())
         when {
           it.typeId < -1 -> PrimitiveAttributeNode(itemDto, itemApi, it, value.firstOrNull()?.primitive, inherited.firstOrNull()?.primitive, this, readOnly)
-          else -> ItemAttributeNode(itemDto, itemApi, it, value, inherited, this, readOnly)
+          it.isSingle -> ItemAttributeNode(itemDto, itemApi, it, value, inherited, this, readOnly)
+          else -> MultipleItemAttributeNode(itemDto, itemApi, it, value, inherited, this, readOnly)
         }
       }
   }
@@ -438,11 +444,11 @@ class PrimitiveAttributeNode(
   }
 }
 
-class ItemAttributeNode(
-  private val itemDto: AbstractItemDto,
-  private val itemApi: ItemApi,
-  private val metadataDto: MetadataDto,
-  private val values: MutableList<ValueDto>,
+open class ItemAttributeNode(
+  protected val itemDto: AbstractItemDto,
+  protected val itemApi: ItemApi,
+  protected val metadataDto: MetadataDto,
+  protected val values: MutableList<ValueDto>,
   private val inherited: MutableList<ValueDto>,
   parent: ItemTreeNode,
   readOnly: Boolean,
@@ -496,4 +502,38 @@ class ItemAttributeNode(
   override fun allowNested(): Boolean = metadataDto.allowCreate && !(isSingle() && hasOwnValue())
 
   override fun allowAdd(): Boolean = metadataDto.allowReference && !(isSingle() && hasOwnValue())
+}
+
+class MultipleItemAttributeNode(
+  itemDto: AbstractItemDto,
+  itemApi: ItemApi,
+  metadataDto: MetadataDto,
+  values: MutableList<ValueDto>,
+  inherited: MutableList<ValueDto>,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+): ItemAttributeNode(itemDto, itemApi, metadataDto, values, inherited, parent, readOnly), MovableItem {
+  override fun moveUp(node: ItemTreeNode) {
+    when (node) {
+      is ValueItemDtoTreeNode -> {
+        if (node.index > 0 && node.index < values.size) {
+          itemApi.moveAttributeUp(itemDto.id, itemDto.nestedId, metadataDto.attributeName, node.index)
+          values.swap(node.index, node.index - 1)
+          cChildren = null
+        }
+      }
+    }
+  }
+
+  override fun moveDown(node: ItemTreeNode) {
+    when (node) {
+      is ValueItemDtoTreeNode -> {
+        if (node.index < values.size - 1) {
+          itemApi.moveAttributeDown(itemDto.id, itemDto.nestedId, metadataDto.attributeName, node.index)
+          values.swap(node.index, node.index + 1)
+          cChildren = null
+        }
+      }
+    }
+  }
 }

@@ -109,4 +109,10 @@ interface ItemController {
 
   @PutMapping("/items/{id}/{nestedId}/attribute/{attributeName}/values/{valueIndex}/primitive")
   fun modifyAttributePrimitiveValue(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable attributeName: String, @PathVariable valueIndex: Int, @RequestBody newValue: String): ValueDto
+
+  @PostMapping("/items/{id}/{nestedId}/attribute/{attributeName}/values/{valueIndex}/up")
+  fun moveAttributeUp(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable attributeName: String, @PathVariable valueIndex: Int)
+
+  @PostMapping("/items/{id}/{nestedId}/attribute/{attributeName}/values/{valueIndex}/down")
+  fun moveAttributeDown(@PathVariable id: Long, @PathVariable nestedId: Long = -1, @PathVariable attributeName: String, @PathVariable valueIndex: Int)
 }

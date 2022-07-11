@@ -80,8 +80,16 @@ interface LineElement {
   fun toComponents(): List<Component>
 }
 
-class ComponentLineElement(vararg components: Component) : LineElement {
-  private val list = components.toList()
+class ComponentLineElement : LineElement {
+  private val list: List<Component>
+
+  constructor(vararg components: Component) {
+    list = components.toList()
+  }
+
+  constructor(components: List<Component>) {
+    list = components
+  }
 
   override fun concat(right: LineElement): List<LineElement> = when (right) {
     is ComponentLineElement -> listOf(ComponentLineElement(*(list + right.list).toTypedArray()))
@@ -110,6 +118,21 @@ open class EditableLine {
   lateinit var refreshItem: (ItemTreeNode, Boolean) -> Unit
 
   open fun getElements(editing: Boolean): List<LineElement> = listOf()
+
+  protected fun arrowButtons(item: ItemTreeNode) = when (item.parent) {
+    is MovableItem -> {
+      val upButton = Button(Icon(VaadinIcon.ARROW_UP)) {
+        item.parent.moveUp(item)
+        refreshItem(item.parent, true)
+      }
+      val downButton = Button(Icon(VaadinIcon.ARROW_DOWN)) {
+        item.parent.moveDown(item)
+        refreshItem(item.parent, true)
+      }
+      listOf(upButton, downButton)
+    }
+    else -> listOf()
+  }
 }
 
 class StringLine(private val item: ItemTreeNode, private val editWidth: String, private val validator: (String) -> String = { it }) : EditableLine() {
@@ -237,7 +260,9 @@ class ReferenceLine(private val item: ItemTreeNode) : EditableLine() {
         item.parent!!.remove(item)
         refreshItem(item.parent, true)
       }
-      listOf(StringLineElement(name), ComponentLineElement(removeButton))
+      val buttons = listOf(removeButton) + arrowButtons(item)
+
+      listOf(StringLineElement(name), ComponentLineElement(buttons))
     } else {
       listOf(StringLineElement(name, item.readOnly))
     }
@@ -260,7 +285,8 @@ class ItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
         item.parent!!.remove(item)
         refreshItem(item.parent, true)
       }
-      listOf(ComponentLineElement(editField, removeButton))
+      val button = listOf(editField, removeButton) + arrowButtons(item)
+      listOf(ComponentLineElement(button))
     } else {
       listOf(StringLineElement(name, item.readOnly))
     }
@@ -332,18 +358,11 @@ open class RefLine(private val item: ItemTreeNode) : EditableLine() {
       } else {
         null
       }
-      if (addButton != null) {
-        if (createButton != null) {
-          listOf(StringLineElement(name), ComponentLineElement(addButton, createButton))
-        } else {
-          listOf(StringLineElement(name), ComponentLineElement(addButton))
-        }
-      } else {
-        if (createButton != null) {
-          listOf(StringLineElement(name), ComponentLineElement(createButton))
-        } else {
-          listOf(StringLineElement(name))
-        }
+
+      val buttons = listOf(addButton, createButton).mapNotNull { it }
+      when {
+        buttons.isNotEmpty() -> listOf(StringLineElement(name), ComponentLineElement(buttons))
+        else -> listOf(StringLineElement(name))
       }
     } else {
       listOf(StringLineElement(name, item.readOnly))

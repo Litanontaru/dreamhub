@@ -18,7 +18,7 @@ class ItemService(
   private val itemRepository: ItemRepository,
   private val itemIndexRepository: ItemIndexRepository,
   private val settingService: SettingService,
-  private val itemIndexService: ItemIndexService
+  private val itemIndexService: ItemIndexService,
 ) {
   fun reindexAll() = itemIndexService.reindexAll()
 
@@ -309,9 +309,9 @@ class ItemService(
   }
 
   fun addAttributePrimitiveValue(id: Long, nestedId: Long, attributeName: String, newValue: String) = ValueDto().also {
-      it.primitive = newValue
-      addAttributeValue(id, nestedId, attributeName, it)
-    }
+    it.primitive = newValue
+    addAttributeValue(id, nestedId, attributeName, it)
+  }
 
   fun addAttributeTerminalValue(id: Long, nestedId: Long, attributeName: String, newValue: Long) = ValueDto().also {
     it.terminal = RefDto().apply {
@@ -363,7 +363,7 @@ class ItemService(
     nestedId: Long,
     attributeName: String,
     valueIndex: Int,
-    newValue: ValueDto
+    newValue: ValueDto,
   ) {
     itemRepository
       .findById(id)
@@ -380,6 +380,33 @@ class ItemService(
   fun modifyAttributePrimitiveValue(id: Long, nestedId: Long, attributeName: String, valueIndex: Int, newValue: String) = ValueDto().also {
     it.primitive = newValue
     modifyAttributeValue(id, nestedId, attributeName, valueIndex, it)
+  }
+
+  fun moveAttributeUp(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {
+    if (valueIndex > 0) {
+      itemRepository
+        .findById(id)
+        .get()
+        .modify(nestedId) {
+          it.attributes
+            .find { it.name == attributeName }
+            ?.values
+            ?.swap(valueIndex, valueIndex - 1)
+        }
+    }
+  }
+
+  fun moveAttributeDown(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {
+    itemRepository
+      .findById(id)
+      .get()
+      .modify(nestedId) {
+        it.attributes
+          .find { it.name == attributeName }
+          ?.takeIf { valueIndex < it.values.size - 1 }
+          ?.values
+          ?.swap(valueIndex, valueIndex + 1)
+      }
   }
 }
 

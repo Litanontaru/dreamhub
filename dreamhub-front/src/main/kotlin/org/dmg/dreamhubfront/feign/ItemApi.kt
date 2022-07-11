@@ -118,6 +118,14 @@ class ItemApi(private val itemController: ItemController) {
   fun modifyAttributePrimitiveValue(id: Long, nestedId: Long = -1, attributeName: String, valueIndex: Int, newValue: String): ValueDto {
     return itemController.modifyAttributePrimitiveValue(id, nestedId, attributeName.emptySubstitute(), valueIndex, newValue)
   }
+
+  fun moveAttributeUp(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {
+    return itemController.moveAttributeUp(id, nestedId, attributeName.emptySubstitute(), valueIndex)
+  }
+
+  fun moveAttributeDown(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {
+    return itemController.moveAttributeDown(id, nestedId, attributeName.emptySubstitute(), valueIndex)
+  }
 }
 
 fun String.emptySubstitute() = when (this) {
