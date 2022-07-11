@@ -122,19 +122,34 @@ class AttributeDto {
 
   var inherited: MutableList<ValueDto>? = null
 
-  fun comboValues(): List<ValueDto> = inherited?.let { values.toList() + noShadowedInherited()!! } ?: values.toList()
-
-  fun noShadowedInherited() =
+  fun comboValues(): List<ValueDto> =
     inherited
-      ?.let {
-        values
-          .mapNotNull { it.item() }
-          .map { it.name }
-          .toSet()
-          .let { names -> it.asSequence().filter { it.item()?.let { it.name !in names } ?: true }.toMutableList() }
-      }
+      ?.shadowing()
+      ?.let { it.first + it.second }
+      ?: values.toList()
 
-  fun showValues() = values to (noShadowedInherited() ?: mutableListOf())
+  fun showValues() =
+    inherited
+      ?.shadowing()
+      ?: (values to mutableListOf())
+
+  private fun mainNames() = values.mapNotNull { it.item()?.name }.toSet()
+
+  private fun MutableList<ValueDto>.shadowing(): Pair<MutableList<ValueDto>, MutableList<ValueDto>> {
+    val names = mainNames()
+
+    val (shadowed, other) = this.partition { it.item()?.let { it.name in names } ?: false }
+
+    if (!shadowed.isEmpty()) {
+      val byName = shadowed.associateBy { it.item()!!.name }
+      for (it in values) {
+        byName[it.item()!!.name]?.let { shadow ->
+          it.item()!! += shadow.item()!!
+        }
+      }
+    }
+    return values to other.toMutableList()
+  }
 
   operator fun plusAssign(right: ValueDto) {
     if (comboValues().isEmpty()) {
