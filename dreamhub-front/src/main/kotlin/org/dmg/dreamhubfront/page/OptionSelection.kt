@@ -7,6 +7,7 @@ import com.vaadin.flow.component.grid.GridVariant
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.TextField
+import com.vaadin.flow.data.provider.DataProvider
 import org.dmg.dreamhubfront.ItemListDto
 import org.dmg.dreamhubfront.ItemName
 import org.dmg.dreamhubfront.feign.ItemApi
@@ -15,17 +16,20 @@ class OptionSelection(
   private val itemApi: ItemApi,
   private val types: List<ItemName>,
   private val settingId: Long,
-  private val onSelect: (ItemListDto) -> Unit
+  private val onSelect: (ItemListDto) -> Unit,
 ) : Dialog() {
   init {
     add(VerticalLayout().apply {
-      val items = itemApi.getSubItems(settingId, types.map { it.id })
+      val dataProvider = DataProvider.ofCollection(itemApi.getSubItems(settingId, types.map { it.id }))
 
       val filter = TextField().apply {
         width = "100%"
 
-        addValueChangeListener {
-//          dataProvider.filter = it.value
+        addValueChangeListener { event ->
+          when (event.value) {
+            null -> dataProvider.clearFilters()
+            else -> dataProvider.setFilter { it.name.contains(event.value, true) }
+          }
         }
       }
 
@@ -33,7 +37,7 @@ class OptionSelection(
         addColumn { it.name }
 //        addColumn { it.rate }
 
-        setItems(items)
+        this.setItems(dataProvider)
 
         addThemeVariants(GridVariant.LUMO_NO_BORDER)
       }
