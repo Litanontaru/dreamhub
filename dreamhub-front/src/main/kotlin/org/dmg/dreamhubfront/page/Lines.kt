@@ -63,7 +63,7 @@ object Lines {
     is ItemDtoTreeNode -> ItemDtoLine(node)
     is ValueNode -> when (node.types().first()) {
       STRING -> StringLine(node, "35em")
-      POSITIVE -> StringLine(node, "6em") { it.toIntOrNull()?.takeIf { it > 0L }?.toString() ?: "" }
+      POSITIVE -> StringLine(node, "6em") { it.toIntOrNull()?.takeIf { it >= 0L }?.toString() ?: "" }
       INT -> StringLine(node, "6em") { it.toIntOrNull()?.toString() ?: "" }
       DECIMAL -> StringLine(node, "6em") { it.toDecimalOrNull()?.toString() ?: "" }
       BOOLEAN -> BooleanLine(node)
