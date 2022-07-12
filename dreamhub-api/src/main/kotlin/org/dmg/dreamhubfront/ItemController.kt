@@ -76,6 +76,9 @@ interface ItemController {
   @DeleteMapping("/items/{id}/allowedextensions/{oldAllowedExtensionId}")
   fun removeAllowedExtensions(@PathVariable id: Long, @PathVariable oldAllowedExtensionId: Long)
 
+  @PutMapping("/items/{id}/groups/{groups}")
+  fun setGroup(@PathVariable id: Long, @PathVariable groups: String)
+
   //--------------------------------------------------------------------------------------------------------------------
 
   @PostMapping("/items/{id}/metadata")

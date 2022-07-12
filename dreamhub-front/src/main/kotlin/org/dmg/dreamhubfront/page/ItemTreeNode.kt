@@ -149,8 +149,9 @@ class MainItemDtoTreeNode(
         IsTypeNode(itemDto, itemApi, this, false),
         IsFinalNode(itemDto, itemApi, this, false),
         DescriptionNode(itemDto, itemApi, this, false),
+        GroupsNode(itemDto, itemApi, this, false),
         AllowedExtensionsNode(itemDto, itemApi, this, false),
-        ExtendsNode(itemDto, itemApi, this, false)
+        ExtendsNode(itemDto, itemApi, this, false),
       )}
       val childrenAttributes = track("attributes\t${itemDto.id}/${itemDto.nestedId}") { childrenAttributes() }
       val metadataNodes = track("metadata\t${itemDto.id}/${itemDto.nestedId}") { itemDto.metadata.asSequence().map { MetadataNode(itemDto, it, itemApi, this, false) } }
@@ -316,6 +317,24 @@ class DescriptionNode(
       is String -> {
         itemApi.setDescription(itemDto.id, newValue)
         itemDto.description = newValue
+      }
+    }
+  }
+}
+
+class GroupsNode(
+  val itemDto: ItemDto,
+  val itemApi: ItemApi,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ValueNode("Группы", STRING, parent, readOnly) {
+  override fun getAsPrimitive() = itemDto.groups
+
+  override fun setAsPrimitive(newValue: Any?) {
+    when (newValue) {
+      is String -> {
+        itemApi.setGroup(itemDto.id, newValue)
+        itemDto.groups = newValue
       }
     }
   }

@@ -230,6 +230,10 @@ class ItemService(
       .modify { it.allowedExtensions.removeIf { it.id == oldAllowedExtensionId } }
   }
 
+  fun setGroup(id: Long, groups: String) {
+    itemRepository.findById(id).get().modify { it.groups = groups }
+  }
+
   fun addMetadata(id: Long, newMetadata: MetadataDto) {
     itemRepository
       .findById(id)

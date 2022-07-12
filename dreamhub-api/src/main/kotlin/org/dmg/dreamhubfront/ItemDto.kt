@@ -87,6 +87,7 @@ class ItemDto : AbstractItemDto() {
   var path: String = ""
   var settingId: Long = 0
   var allowedExtensions: MutableList<ItemName> = mutableListOf()
+  var groups: String = ""
   var metadata: MutableList<MetadataDto> = mutableListOf()
   var formula: String = ""
   var isType: Boolean = false

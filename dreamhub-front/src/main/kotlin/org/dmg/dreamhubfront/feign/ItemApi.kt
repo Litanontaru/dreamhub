@@ -79,6 +79,10 @@ class ItemApi(private val itemController: ItemController) {
     itemController.removeAllowedExtensions(id, oldAllowedExtensionId)
   }
 
+  fun setGroup(id: Long, groups: String) {
+    itemController.setGroup(id, groups.emptySubstitute())
+  }
+
   fun addMetadata(id: Long, newMetadata: MetadataDto) {
     itemController.addMetadata(id, newMetadata)
   }

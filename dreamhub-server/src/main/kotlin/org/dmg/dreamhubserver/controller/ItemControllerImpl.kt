@@ -71,6 +71,10 @@ class ItemControllerImpl(
     service.removeAllowedExtensions(id, oldAllowedExtensionId)
   }
 
+  override fun setGroup(id: Long, groups: String) {
+    service.setGroup(id, groups.emptySubstitute())
+  }
+
   override fun addMetadata(id: Long, newMetadata: MetadataDto) {
     service.addMetadata(id, newMetadata)
   }
