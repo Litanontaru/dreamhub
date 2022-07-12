@@ -91,7 +91,12 @@ class ItemService(
       definition = newItem.toJson()
     }
     itemRepository.save(item)
-    item.modify { it.id = item.id }
+
+    fun AbstractItemDto.setId() {
+      id = item.id
+      attributes.asSequence().flatMap { it.values }.mapNotNull { it.nested }.forEach { it.setId() }
+    }
+    item.modify { it.setId() }
 
     itemIndexService.reindexRecursive(item)
 
