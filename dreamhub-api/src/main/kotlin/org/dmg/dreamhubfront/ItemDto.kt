@@ -37,6 +37,10 @@ open class AbstractItemDto : ItemName() {
 
   fun superAllowedExtensions() = extendsItems().flatMap { it.comboAllowedExtensions() }.distinct()
 
+  open fun mainGroups() = listOf<String>()
+
+  fun comboGroups(): List<String> = (mainGroups() + (extendsItems().flatMap { it.comboGroups() })).distinct()
+
   open fun mainMetadata(): Sequence<MetadataDto> = emptySequence()
 
   fun comboMetadata(): Sequence<MetadataDto> = superMetadata() + mainMetadata()
@@ -63,7 +67,7 @@ open class AbstractItemDto : ItemName() {
   open operator fun not(): AbstractItemDto = apply { inherit() }
 
   fun inherit() {
-    extendsItems().fold(this) { acc, i -> acc += !i; acc }
+    extendsItems().toList().reversed().fold(this) { acc, i -> acc += !i; acc }
   }
 
   operator fun plusAssign(right: AbstractItemDto) {
@@ -96,6 +100,8 @@ class ItemDto : AbstractItemDto() {
 
   override fun mainAllowedExtensions() = allowedExtensions
 
+  override fun mainGroups() = groups.split(",").map { it.trim() }.filter { it.isNotBlank() }
+
   override fun mainMetadata(): Sequence<MetadataDto> = metadata.asSequence()
 
   override operator fun not(): ItemDto = apply { inherit() }
@@ -125,32 +131,14 @@ class AttributeDto {
 
   fun comboValues(): List<ValueDto> =
     inherited
-      ?.shadowing()
+      ?.shadowedBy(values)
       ?.let { it.first + it.second }
       ?: values.toList()
 
   fun showValues() =
     inherited
-      ?.shadowing()
+      ?.shadowedBy(values)
       ?: (values to mutableListOf())
-
-  private fun mainNames() = values.mapNotNull { it.item()?.name }.toSet()
-
-  private fun MutableList<ValueDto>.shadowing(): Pair<MutableList<ValueDto>, MutableList<ValueDto>> {
-    val names = mainNames()
-
-    val (shadowed, other) = this.partition { it.item()?.let { it.name in names } ?: false }
-
-    if (!shadowed.isEmpty()) {
-      val byName = shadowed.associateBy { it.item()!!.name }
-      for (it in values) {
-        byName[it.item()!!.name]?.let { shadow ->
-          it.item()!! += shadow.item()!!
-        }
-      }
-    }
-    return values to other.toMutableList()
-  }
 
   operator fun plusAssign(right: ValueDto) {
     if (comboValues().isEmpty()) {
@@ -167,7 +155,7 @@ class AttributeDto {
 
   operator fun plusAssign(values: List<ValueDto>) {
     inherited
-      ?.let { it += values }
+      ?.let {  inherited = values.shadowedBy(it).let { (a, b) -> a + b }.toMutableList() }
       ?: run { inherited = values.toMutableList() }
   }
 }
@@ -219,9 +207,6 @@ object StandardTypes {
   val ALL = listOf(NOTHING, STRING, POSITIVE, INT, DECIMAL, BOOLEAN, TYPE)
 }
 
-@Deprecated("old and wrong")
-fun AbstractItemDto.attributesLegacy(): Sequence<AttributeDto> = attributes.asSequence() + extendsItems().flatMap { it.attributes }
-
 fun ItemDto.isAbstract(): Boolean = isAbstract(setOf())
 
 fun ItemDto.isAbstract(attributeNames: Set<String>): Boolean =
@@ -229,4 +214,19 @@ fun ItemDto.isAbstract(attributeNames: Set<String>): Boolean =
       (attributeNames + attributes.map { it.name })
         .let { attributes -> extendsItems().any { it.isAbstract(attributes) } }
 
-fun AbstractItemDto.nonFinalExtends() = extendsItems().filter { !it.isFinal }
+fun List<ValueDto>.shadowedBy(values: MutableList<ValueDto>): Pair<MutableList<ValueDto>, MutableList<ValueDto>> {
+  val names = values.mapNotNull { it.item()?.name }.toSet()
+  val groups = values.mapNotNull { it.item()?.comboGroups() }.flatten().toSet()
+
+  val (shadowed, other) = this.partition { it.item()?.let { (it.name in names) || (it.comboGroups().any { it in groups }) } ?: false }
+
+  if (!shadowed.isEmpty()) {
+    val byName = shadowed.associateBy { it.item()!!.name }
+    for (it in values) {
+      byName[it.item()!!.name]?.let { shadow ->
+        it.item()!! += shadow.item()!!
+      }
+    }
+  }
+  return values to other.toMutableList()
+}

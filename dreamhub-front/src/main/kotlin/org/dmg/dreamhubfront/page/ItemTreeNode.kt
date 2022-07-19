@@ -109,7 +109,7 @@ abstract class ItemDtoTreeNode(
     return itemDto
       .superMetadata()
       .map {
-        val (value, inherited) = attributeDtoMap[it.attributeName] ?: (mutableListOf<ValueDto>() to mutableListOf<ValueDto>())
+        val (value, inherited) = attributeDtoMap[it.attributeName] ?: (mutableListOf<ValueDto>() to mutableListOf())
         when {
           it.typeId < -1 -> PrimitiveAttributeNode(itemDto, itemApi, it, value.firstOrNull()?.primitive, inherited.firstOrNull()?.primitive, this, readOnly)
           it.isSingle -> ItemAttributeNode(itemDto, itemApi, it, value, inherited, this, readOnly)
@@ -147,7 +147,6 @@ class MainItemDtoTreeNode(
       val mutableListOf = track("generic\t${itemDto.id}/${itemDto.nestedId}") { sequenceOf(
         FormulaNode(itemDto, itemApi, this, false),
         IsTypeNode(itemDto, itemApi, this, false),
-        IsFinalNode(itemDto, itemApi, this, false),
         DescriptionNode(itemDto, itemApi, this, false),
         GroupsNode(itemDto, itemApi, this, false),
         AllowedExtensionsNode(itemDto, itemApi, this, false),
@@ -177,33 +176,23 @@ class MainItemDtoTreeNode(
 }
 
 open class ValueItemDtoTreeNode(
-  private val itemDto: AbstractItemDto,
-  private val itemApi: ItemApi,
+  itemDto: AbstractItemDto,
+  itemApi: ItemApi,
   val index: Int,
   parent: ItemTreeNode?,
   readOnly: Boolean,
 ) : ItemDtoTreeNode(itemDto, itemApi, parent, readOnly) {
-  override fun children(): List<ItemTreeNode> = childrenAttributes().let {
-    when {
-      itemDto.nonFinalExtends().count() > 0 -> listOf(ExtendsNode(itemDto, itemApi, this, readOnly)) + it
-      else -> it.toList()
-    }
-  }
+  override fun children(): List<ItemTreeNode> = childrenAttributes().toList()
 }
 
 class ReferenceItemDtoTreeNode(
-  private val itemDto: AbstractItemDto,
-  private val itemApi: ItemApi,
+  itemDto: AbstractItemDto,
+  itemApi: ItemApi,
   index: Int,
   parent: ItemTreeNode?,
   readOnly: Boolean,
 ) : ValueItemDtoTreeNode(itemDto, itemApi, index, parent, readOnly) {
-  override fun children(): List<ItemTreeNode> = childrenAttributes().let {
-    when {
-      itemDto is ItemDto && itemDto.isFinal -> it.toList()
-      else -> listOf(ExtendsNode(itemDto, itemApi, this, readOnly)) + it
-    }
-  }
+  override fun children(): List<ItemTreeNode> = childrenAttributes().toList()
 }
 
 class MetadataNode(
@@ -286,24 +275,6 @@ class IsTypeNode(
   }
 }
 
-class IsFinalNode(
-  val itemDto: ItemDto,
-  val itemApi: ItemApi,
-  parent: ItemTreeNode,
-  readOnly: Boolean,
-) : ValueNode("Финальное", BOOLEAN, parent, readOnly) {
-  override fun getAsPrimitive() = itemDto.isFinal
-
-  override fun setAsPrimitive(newValue: Any?) {
-    when (newValue) {
-      is Boolean -> {
-        itemApi.setIsFinal(itemDto.id, newValue)
-        itemDto.isFinal = newValue
-      }
-    }
-  }
-}
-
 class DescriptionNode(
   val itemDto: ItemDto,
   val itemApi: ItemApi,
@@ -350,7 +321,7 @@ class ExtendsNode(
 
   private fun extends() = when (parent) {
     is MainItemDtoTreeNode -> itemDto.extendsItems()
-    else -> itemDto.nonFinalExtends()
+    else -> sequenceOf()
   }
 
   override fun hasChildren(): Boolean = extends().any()
@@ -455,11 +426,10 @@ class PrimitiveAttributeNode(
   private fun setAsString(newValue: String) {
     if (value == null) {
       itemApi.addAttributePrimitiveValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, newValue)
-      value = newValue
     } else {
       itemApi.modifyAttributePrimitiveValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, 0, newValue)
-      value = newValue
     }
+    value = newValue
   }
 }
 
@@ -494,7 +464,7 @@ open class ItemAttributeNode(
   override fun canCompact() = metadataDto.isSingle
 
   override fun inAdd(value: ItemName) {
-    if (itemApi.get(value.id).isAbstract()) {
+    if (itemApi[value.id].isAbstract()) {
       inCreate(value)
     } else {
       itemApi.addAttributeTerminalValue(itemDto.id, itemDto.nestedId, metadataDto.attributeName, value.id).also { values.add(it) }

@@ -51,10 +51,6 @@ class ItemControllerImpl(
     service.setIsType(id, newIsType)
   }
 
-  override fun setIsFinal(id: Long, newIsFinal: Boolean) {
-    service.setIsFinal(id, newIsFinal)
-  }
-
   override fun setDescription(id: Long, newDescription: String) {
     service.setDescription(id, newDescription)
   }

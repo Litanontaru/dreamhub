@@ -55,10 +55,6 @@ class ItemApi(private val itemController: ItemController) {
     itemController.setIsType(id, newIsType)
   }
 
-  fun setIsFinal(id: Long, newIsFinal: Boolean) {
-    itemController.setIsFinal(id, newIsFinal)
-  }
-
   fun setDescription(id: Long, newDescription: String) {
     itemController.setDescription(id, newDescription)
   }

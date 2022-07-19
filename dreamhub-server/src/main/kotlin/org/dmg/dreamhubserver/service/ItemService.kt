@@ -176,10 +176,6 @@ class ItemService(
     item.isType = newIsType
   }
 
-  fun setIsFinal(id: Long, newIsFinal: Boolean) {
-    itemRepository.findById(id).get().modify { it.isFinal = newIsFinal }
-  }
-
   fun setDescription(id: Long, newDescription: String) {
     itemRepository.findById(id).get().modify { it.description = newDescription }
   }
