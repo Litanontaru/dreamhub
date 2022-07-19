@@ -144,18 +144,21 @@ class MainItemDtoTreeNode(
 
   override fun children(): List<ItemTreeNode> {
     return track("all\t${itemDto.id}/${itemDto.nestedId}") {
-      val mutableListOf = track("generic\t${itemDto.id}/${itemDto.nestedId}") { sequenceOf(
+      val children = track("generic\t${itemDto.id}/${itemDto.nestedId}") { mutableListOf(
         FormulaNode(itemDto, itemApi, this, false),
         IsTypeNode(itemDto, itemApi, this, false),
         DescriptionNode(itemDto, itemApi, this, false),
         GroupsNode(itemDto, itemApi, this, false),
+        TypeNode(itemDto, itemApi, this, false),
         AllowedExtensionsNode(itemDto, itemApi, this, false),
-        ExtendsNode(itemDto, itemApi, this, false),
       )}
+      if (itemDto.comboAllowedExtensions().isNotEmpty()) {
+        children += ExtensionNode(itemDto, itemApi, this, false)
+      }
       val childrenAttributes = track("attributes\t${itemDto.id}/${itemDto.nestedId}") { childrenAttributes() }
       val metadataNodes = track("metadata\t${itemDto.id}/${itemDto.nestedId}") { itemDto.metadata.asSequence().map { MetadataNode(itemDto, it, itemApi, this, false) } }
 
-      track("toList\t${itemDto.id}/${itemDto.nestedId}") { (mutableListOf + childrenAttributes + metadataNodes).toList() }
+      track("toList\t${itemDto.id}/${itemDto.nestedId}") { (children + childrenAttributes + metadataNodes).toList() }
     }
   }
 
@@ -176,13 +179,20 @@ class MainItemDtoTreeNode(
 }
 
 open class ValueItemDtoTreeNode(
-  itemDto: AbstractItemDto,
-  itemApi: ItemApi,
+  private val itemDto: AbstractItemDto,
+  private val itemApi: ItemApi,
   val index: Int,
   parent: ItemTreeNode?,
   readOnly: Boolean,
 ) : ItemDtoTreeNode(itemDto, itemApi, parent, readOnly) {
-  override fun children(): List<ItemTreeNode> = childrenAttributes().toList()
+  override fun children(): List<ItemTreeNode> {
+    return when {
+      itemDto.comboAllowedExtensions().isEmpty() -> childrenAttributes()
+      else -> {
+        sequenceOf(ExtensionNode(itemDto, itemApi, this, false)) + childrenAttributes()
+      }
+    }.toList()
+  }
 }
 
 class ReferenceItemDtoTreeNode(
@@ -311,18 +321,21 @@ class GroupsNode(
   }
 }
 
-class ExtendsNode(
+abstract class ExtendsNode(
+  private val name: String,
   private val itemDto: AbstractItemDto,
   private val itemApi: ItemApi,
   parent: ItemTreeNode,
   readOnly: Boolean,
 ) : ItemTreeNode(parent, readOnly) {
-  override fun name(): String = "Основа"
+  override fun name(): String = name
 
-  private fun extends() = when (parent) {
+  protected fun innerExtends() = when (parent) {
     is MainItemDtoTreeNode -> itemDto.extendsItems()
     else -> sequenceOf()
   }
+
+  protected abstract fun extends(): Sequence<ItemDto>
 
   override fun hasChildren(): Boolean = extends().any()
 
@@ -350,6 +363,26 @@ class ExtendsNode(
   }
 
   override fun isSingle(): Boolean = false
+}
+
+class TypeNode(
+  private val itemDto: AbstractItemDto,
+  itemApi: ItemApi,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ExtendsNode("Тип", itemDto, itemApi, parent, readOnly) {
+  override fun extends() = itemDto.extendsItems().filter { it.isType }
+
+  override fun types() = listOf(TYPE)
+}
+
+class ExtensionNode(
+  private val itemDto: AbstractItemDto,
+  itemApi: ItemApi,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ExtendsNode("Расширение", itemDto, itemApi, parent, readOnly) {
+  override fun extends(): Sequence<ItemDto> = itemDto.extendsItems().toList().filter { !it.isType }.asSequence()
 
   override fun types(): List<ItemName> = itemDto.comboAllowedExtensions()
 }
@@ -501,7 +534,7 @@ class MultipleItemAttributeNode(
   inherited: MutableList<ValueDto>,
   parent: ItemTreeNode,
   readOnly: Boolean,
-): ItemAttributeNode(itemDto, itemApi, metadataDto, values, inherited, parent, readOnly), MovableItem {
+) : ItemAttributeNode(itemDto, itemApi, metadataDto, values, inherited, parent, readOnly), MovableItem {
   override fun moveUp(node: ItemTreeNode) {
     when (node) {
       is ValueItemDtoTreeNode -> {

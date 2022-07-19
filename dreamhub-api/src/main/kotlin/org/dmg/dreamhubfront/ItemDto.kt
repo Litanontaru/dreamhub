@@ -1,7 +1,5 @@
 package org.dmg.dreamhubfront
 
-import org.dmg.dreamhubfront.StandardTypes.TYPE
-
 open class ItemName {
   var id: Long = 0
   var name: String = ""
@@ -33,7 +31,7 @@ open class AbstractItemDto : ItemName() {
 
   open fun mainAllowedExtensions(): List<ItemName> = listOf()
 
-  fun comboAllowedExtensions(): List<ItemName> = (listOf(TYPE) + mainAllowedExtensions() + superAllowedExtensions()).distinct()
+  fun comboAllowedExtensions(): List<ItemName> = (mainAllowedExtensions() + superAllowedExtensions()).distinct()
 
   fun superAllowedExtensions() = extendsItems().flatMap { it.comboAllowedExtensions() }.distinct()
 
@@ -67,7 +65,14 @@ open class AbstractItemDto : ItemName() {
   open operator fun not(): AbstractItemDto = apply { inherit() }
 
   fun inherit() {
-    extendsItems().toList().reversed().fold(this) { acc, i -> acc += !i; acc }
+    extendsItems()
+      .toList()
+      .reversed()
+      .fold(this) { acc, i -> acc += !i; acc }
+    attributes
+      .asSequence()
+      .flatMap { it.values.asSequence() }
+      .forEach { it.item()?.not() }
   }
 
   operator fun plusAssign(right: AbstractItemDto) {
@@ -209,10 +214,14 @@ object StandardTypes {
 
 fun ItemDto.isAbstract(): Boolean = isAbstract(setOf())
 
-fun ItemDto.isAbstract(attributeNames: Set<String>): Boolean =
-  metadata.filter { it.isRequired }.any { !attributeNames.contains(it.attributeName) } ||
-      (attributeNames + attributes.map { it.name })
-        .let { attributes -> extendsItems().any { it.isAbstract(attributes) } }
+fun ItemDto.isAbstract(definedAttributeNames: Set<String>): Boolean {
+  val aFieldIsNotDefined = !metadata.filter { it.isRequired }.all { definedAttributeNames.contains(it.attributeName) }
+
+  val defined = definedAttributeNames + attributes.map { it.name }
+  val anExtendsIsAbstract = extendsItems().any { it.isAbstract(defined) }
+
+  return aFieldIsNotDefined || anExtendsIsAbstract
+}
 
 fun List<ValueDto>.shadowedBy(values: MutableList<ValueDto>): Pair<MutableList<ValueDto>, MutableList<ValueDto>> {
   val names = values.mapNotNull { it.item()?.name }.toSet()
