@@ -153,7 +153,11 @@ class StringLine(private val item: ItemTreeNode, private val editWidth: String, 
 
       listOf(StringLineElement("${item.name()}: "), ComponentLineElement(editField))
     } else {
-      listOf(StringLineElement("${item.name()}: $initial", item.readOnly))
+      if (initial.isBlank()) {
+        listOf(StringLineElement("${item.name()}: ", item.readOnly), StringLineElement(default, true))
+      } else {
+        listOf(StringLineElement("${item.name()}: $initial", item.readOnly))
+      }
     }
   }
 }
