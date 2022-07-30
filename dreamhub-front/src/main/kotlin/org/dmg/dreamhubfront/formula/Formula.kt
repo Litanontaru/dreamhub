@@ -19,11 +19,12 @@ interface FNode {
   fun count(): FNode = object : FNode {
     override fun calculate(): Decimal = Decimal.ONE
   }
+
   fun prod(): FNode = this
   fun sumto(): FNode = this
 }
 
-class FCalculator(private val calculator: () -> Decimal): FNode {
+class FCalculator(private val calculator: () -> Decimal) : FNode {
   override fun calculate(): Decimal = calculator()
 }
 
@@ -50,7 +51,7 @@ class FSum(private val values: List<FNode>) : FClosedSum(values) {
 
   override fun close(): FNode = FClosedSum(values)
 
-  override fun orZero(): FNode  = FSum(values.dropLast(1) + values.last().orZero())
+  override fun orZero(): FNode = FSum(values.dropLast(1) + values.last().orZero())
 
   override fun plus(right: FNode) = FSum(values + right)
 
@@ -62,13 +63,13 @@ class FSum(private val values: List<FNode>) : FClosedSum(values) {
 class FTimes(private val values: List<FNode>) : FNode {
   override fun calculate(): Decimal = values.fold(Decimal.NONE as Decimal) { acc, r -> acc * r.calculate() }
 
-  override fun orZero(): FNode  = FTimes(values.dropLast(1) + values.last().orZero())
+  override fun orZero(): FNode = FTimes(values.dropLast(1) + values.last().orZero())
 
   override fun times(right: FNode): FNode = FTimes(values + right)
 }
 
 class FDiv(private val left: FNode, private val right: FNode) : FNode {
-  override fun orZero(): FNode  = FDiv(left, right.orZero())
+  override fun orZero(): FNode = FDiv(left, right.orZero())
 
   override fun calculate(): Decimal = left.calculate() / right.calculate()
 }
@@ -112,7 +113,7 @@ class FNodeList(val values: List<FNode>) : FAbstractNodeList {
   override fun and(right: FNode): FNode = FNodeList(values + right)
 }
 
-class FOrZero(private val inner: FNode): FNode {
+class FOrZero(private val inner: FNode) : FNode {
   override fun calculate(): Decimal = when (val value = inner.calculate()) {
     is NanDecimal -> Decimal.ZERO
     else -> value
@@ -185,33 +186,6 @@ object Formula {
   fun String?.toFormula(context: (String) -> List<Decimal>) = this
     ?.let { Formula(it, context) }
     ?: FNone("")
-}
-
-class Context(map: Map<String, List<Decimal>>) : ((String) -> List<Decimal>) {
-  private val attributes = map.mapKeys { it.key.uppercase() }
-
-  override fun invoke(value: String): List<Decimal> =
-    when {
-      value == "_" -> attributes.values.flatten().filter { it !is NanDecimal }
-      value.startsWith("&") ->
-        value
-          .substring(1)
-          .stripQuotation()
-          .let { type -> attributes.values.flatMap { it }.filter { it.type == type } }
-      else ->
-        value
-          .stripQuotation()
-          .let {
-            attributes[it]
-              ?: it.toBigDecimalOrNull()?.toDecimal()?.let { listOf(it) }
-              ?: listOf(NoneDecimal(it))
-          }
-    }
-
-  private fun String.stripQuotation() = when {
-    startsWith("\"") -> substring(1, length - 1)
-    else -> this
-  }
 }
 
 /*

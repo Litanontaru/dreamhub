@@ -1,7 +1,40 @@
 package org.dmg.dreamhubfront.formula
 
-import org.dmg.dreamhubfront.*
+import org.dmg.dreamhubfront.AbstractItemDto
+import org.dmg.dreamhubfront.ItemDto
+import org.dmg.dreamhubfront.ValueDto
 import org.dmg.dreamhubfront.formula.Formula.toFormula
+
+class ItemContext(private val item: AbstractItemDto) : ((String) -> List<Decimal>) {
+  override fun invoke(value: String): List<Decimal> = when {
+    value == "_" -> item.attributes.flatMap { it.comboValues() }.map { it.rate() }.filter { it !is NanDecimal }
+    value.startsWith("&") -> value
+      .substring(1)
+      .stripQuotation()
+      .let { key ->
+        val (match, notMatch) = item.attributes.partition { it.name.equals(key, ignoreCase = true) }
+        match.flatMap { it.comboValues() }.map { it.rate() } +
+            notMatch.flatMap { it.comboValues() }.mapNotNull { it.item() }.flatMap { it.getContext()(key) }
+      }
+      .filter { it !is NanDecimal }
+    else -> value
+      .stripQuotation()
+      .let { key ->
+        item
+          .attributes
+          .find { it.name.equals(key, ignoreCase = true) }
+          ?.comboValues()
+          ?.map { it.rate() }
+          ?: key.toBigDecimalOrNull()?.toDecimal()?.let { listOf(it) }
+          ?: listOf(NanDecimal)
+      }
+  }
+}
+
+private fun String.stripQuotation() = when {
+  startsWith("\"") -> substring(1, length - 1)
+  else -> this
+}
 
 fun AbstractItemDto.rate(): Decimal? = try {
   formula()?.toFormula(getContext())?.calculate()
@@ -9,14 +42,7 @@ fun AbstractItemDto.rate(): Decimal? = try {
   NanDecimal
 }
 
-fun AbstractItemDto.getContext(): Context =
-  attributes
-    .groupBy({ it.name }, { it.comboValues() })
-    .mapValues { it.value.flatMap { it }.let { value -> value.map { it.rate() } } }
-    .let { attributes ->
-      attributes + comboMetadata().map { it.attributeName }.filter { !attributes.containsKey(it) }.map { it to listOf(NanDecimal) }
-    }
-    .let { Context(it) }
+fun AbstractItemDto.getContext(): ItemContext = ItemContext(this)
 
 fun AbstractItemDto.formula(): String? =
   when (val item = this) {
