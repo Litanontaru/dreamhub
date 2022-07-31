@@ -59,7 +59,7 @@ interface ItemController {
   @PutMapping("/items/{id}/description")
   fun setDescription(@PathVariable id: Long, @RequestBody newDescription: String)
 
-  @PutMapping("/items/{id}/description")
+  @PutMapping("/items/{id}/rank")
   fun setRank(@PathVariable id: Long, @RequestBody newRank: Int)
 
   //--------------------------------------------------------------------------------------------------------------------
