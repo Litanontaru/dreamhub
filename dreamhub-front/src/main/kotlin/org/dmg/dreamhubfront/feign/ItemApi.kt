@@ -59,6 +59,8 @@ class ItemApi(private val itemController: ItemController) {
     itemController.setDescription(id, newDescription)
   }
 
+  fun setRank(id: Long, newRank: Int) = itemController.setRank(id, newRank)
+
   fun addExtends(id: Long, nestedId: Long = -1, newExtendsId: Long): ItemDto {
     return itemController.addExtends(id, nestedId, newExtendsId)
   }

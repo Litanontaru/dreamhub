@@ -169,4 +169,5 @@ fun ItemDto.toListDto() = ItemListDto().also {
   it.name = name
   it.path = path
   it.settingId = settingId
+  it.rank = rank
 }

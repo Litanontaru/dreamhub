@@ -59,6 +59,9 @@ interface ItemController {
   @PutMapping("/items/{id}/description")
   fun setDescription(@PathVariable id: Long, @RequestBody newDescription: String)
 
+  @PutMapping("/items/{id}/description")
+  fun setRank(@PathVariable id: Long, @RequestBody newRank: Int)
+
   //--------------------------------------------------------------------------------------------------------------------
 
   @PostMapping("/items/{id}/{nestedId}/extends/{newExtendsId}")

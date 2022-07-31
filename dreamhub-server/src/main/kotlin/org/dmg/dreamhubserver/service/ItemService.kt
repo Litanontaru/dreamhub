@@ -180,6 +180,12 @@ class ItemService(
     itemRepository.findById(id).get().modify { it.description = newDescription }
   }
 
+  fun setRank(id: Long, newRank: Int) {
+    val item = itemRepository.findById(id).get()
+    item.modify { it.rank = newRank }
+    item.rank = newRank
+  }
+
   fun addExtends(id: Long, nestedId: Long, newExtendsId: Long): ItemDto =
     itemRepository
       .findById(id)
@@ -426,6 +432,7 @@ fun ItemList.toDto(): ItemListDto = ItemListDto().also {
   it.name = getName()
   it.path = getPath()
   it.settingId = getSettingId()
+  it.rank = getRank()
 }
 
 fun ItemListWithExtends.toDto() = TypeDto().apply {
@@ -433,6 +440,7 @@ fun ItemListWithExtends.toDto() = TypeDto().apply {
   name = getName()
   path = getPath()
   settingId = getSettingId()
+  rank = getRank()
   superTypeIds = getExtends().split(",").mapNotNull { it.toLongOrNull() }
 }
 

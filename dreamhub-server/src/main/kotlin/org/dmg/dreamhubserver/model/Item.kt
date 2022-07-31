@@ -21,5 +21,7 @@ class Item: DBObject() {
   @Type(type = "text")
   var definition: String = ""
 
+  var rank: Int = 0
+
   fun extends() = extends.split(",").filter { it.isNotBlank() }.mapNotNull { it.toLongOrNull() }
 }

@@ -12,6 +12,7 @@ open class ItemName {
 open class ItemListDto : ItemName() {
   var path: String = ""
   var settingId: Long = 0
+  var rank: Int = 0
 }
 
 class TypeDto : ItemListDto() {
@@ -102,6 +103,7 @@ class ItemDto : AbstractItemDto() {
   var isType: Boolean = false
   var isFinal: Boolean = false
   var description: String = ""
+  var rank: Int = 0
 
   override fun mainAllowedExtensions() = allowedExtensions
 

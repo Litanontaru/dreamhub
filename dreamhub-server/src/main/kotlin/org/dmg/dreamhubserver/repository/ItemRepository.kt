@@ -5,16 +5,16 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 
 interface ItemRepository : CrudRepository<Item, Long> {
-  @Query("SELECT i.id as id, i.name as name, i.path as path, i.settingId as settingId FROM Item i WHERE i.settingId = :settingId")
+  @Query("SELECT i.id as id, i.name as name, i.path as path, i.settingId as settingId, i.rank as rank FROM Item i WHERE i.settingId = :settingId")
   fun getAll(settingId: Long): List<ItemList>
 
-  @Query("SELECT i.id as id, i.name as name, i.path as path, i.settingId as settingId FROM Item i WHERE i.settingId = :settingId AND i.name LIKE :filter")
+  @Query("SELECT i.id as id, i.name as name, i.path as path, i.settingId as settingId, i.rank as rank FROM Item i WHERE i.settingId = :settingId AND i.name LIKE :filter")
   fun getAll(settingId: Long, filter: String): List<ItemList>
 
-  @Query("SELECT i.id as id, i.name as name, i.path as path, i.settingId as settingId FROM Item i WHERE i.id in :ids")
+  @Query("SELECT i.id as id, i.name as name, i.path as path, i.settingId as settingId, i.rank as rank FROM Item i WHERE i.id in :ids")
   fun getAll(ids: List<Long>): List<ItemList>
 
-  @Query("SELECT i.id as id, i.name as name, i.path as path, i.settingId as settingId, i.extends as extends FROM Item i WHERE i.settingId in :settingIds AND i.isType = TRUE")
+  @Query("SELECT i.id as id, i.name as name, i.path as path, i.settingId as settingId, i.rank as rank, i.extends as extends FROM Item i WHERE i.settingId in :settingIds AND i.isType = TRUE")
   fun getAllTypes(settingIds: List<Long>): List<ItemListWithExtends>
 
   @Query("SELECT i.definition FROM Item i Where i.id = :id")
@@ -29,6 +29,7 @@ interface ItemList {
   fun getName(): String
   fun getPath(): String
   fun getSettingId(): Long
+  fun getRank(): Int
 }
 
 interface ItemListWithExtends: ItemList {

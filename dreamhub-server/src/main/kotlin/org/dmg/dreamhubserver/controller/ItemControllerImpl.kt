@@ -55,6 +55,8 @@ class ItemControllerImpl(
     service.setDescription(id, newDescription)
   }
 
+  override fun setRank(id: Long, newRank: Int) = service.setRank(id, newRank)
+
   override fun addExtends(id: Long, nestedId: Long, newExtendsId: Long) = service.addExtends(id, nestedId, newExtendsId)
 
   override fun removeExtends(id: Long, nestedId: Long, oldExtendsId: Long) = service.removeExtends(id, nestedId, oldExtendsId)
