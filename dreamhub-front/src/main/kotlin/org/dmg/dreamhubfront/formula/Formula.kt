@@ -134,12 +134,13 @@ object Formula {
     }
     var i = 0
 
+    val none: (FNode, FNode) -> FNode = { _, b -> b }
     val times: (FNode, FNode) -> FNode = { a, b -> a * b }
 
     fun parse(shift: Int = 0): FNode {
-      i = i + shift
+      i += shift
       var result: FNode = FNone("")
-      var action = times
+      var action = none
 
       while (true) {
         val part = parts[i].value
@@ -163,10 +164,7 @@ object Formula {
           "PROD" -> result = action(result, parse(1).prod())
           "SUMTO" -> result = action(result, parse(1).sumto())
           "(" -> result = action(result, parse())
-          else -> result = when {
-            part.startsWith("&") -> FVar { context(part) }
-            else -> action(result, FVar { context(part) })
-          }
+          else -> result = action(result, FVar { context(part) })
         }
 
         when (part) {
