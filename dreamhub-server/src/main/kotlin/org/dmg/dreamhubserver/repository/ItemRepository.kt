@@ -29,7 +29,7 @@ interface ItemList {
   fun getName(): String
   fun getPath(): String
   fun getSettingId(): Long
-  fun getRank(): Int
+  fun getRank(): Int?
 }
 
 interface ItemListWithExtends: ItemList {

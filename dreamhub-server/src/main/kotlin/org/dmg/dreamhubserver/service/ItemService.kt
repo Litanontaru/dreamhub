@@ -432,7 +432,7 @@ fun ItemList.toDto(): ItemListDto = ItemListDto().also {
   it.name = getName()
   it.path = getPath()
   it.settingId = getSettingId()
-  it.rank = getRank()
+  it.rank = getRank() ?: 0
 }
 
 fun ItemListWithExtends.toDto() = TypeDto().apply {
@@ -440,7 +440,7 @@ fun ItemListWithExtends.toDto() = TypeDto().apply {
   name = getName()
   path = getPath()
   settingId = getSettingId()
-  rank = getRank()
+  rank = getRank() ?: 0
   superTypeIds = getExtends().split(",").mapNotNull { it.toLongOrNull() }
 }
 
