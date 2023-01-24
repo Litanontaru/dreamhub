@@ -27,6 +27,7 @@ abstract class ItemTreeNode(
 
   abstract fun name(): String?
   open fun rate(): String? = null
+  open fun id(): Long? = null
 
   fun cacheHasChildren(): Boolean = cHas ?: hasChildren().also { cHas = it }
   protected abstract fun hasChildren(): Boolean
@@ -87,9 +88,8 @@ abstract class ItemDtoTreeNode(
   parent: ItemTreeNode?,
   readOnly: Boolean,
 ) : ItemTreeNode(parent, readOnly) {
-  fun id(): Long = itemDto.id
-
   override fun name() = itemDto.id.toString()
+  override fun id(): Long = itemDto.id
 
   override fun rate() = track("rate\t${itemDto.id}/${itemDto.nestedId}") {
     itemDto.rate()?.let {
@@ -329,6 +329,7 @@ abstract class ExtendsNode(
   readOnly: Boolean,
 ) : ItemTreeNode(parent, readOnly) {
   override fun name(): String = name
+  override fun id(): Long = itemDto.id
 
   protected fun innerExtends() = when (parent) {
     is MainItemDtoTreeNode -> itemDto.extendsItems()
@@ -421,9 +422,8 @@ class AllowedExtensionsNode(
 }
 
 class ItemNameNode(private val itemName: ItemName, parent: ItemTreeNode, readOnly: Boolean) : ItemTreeNode(parent, readOnly) {
-  fun id() = itemName.id
-
   override fun name() = itemName.name
+  override fun id(): Long = itemName.id
 
   override fun hasChildren(): Boolean = false
 

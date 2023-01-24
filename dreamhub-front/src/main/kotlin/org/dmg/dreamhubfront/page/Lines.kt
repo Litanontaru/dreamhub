@@ -5,6 +5,7 @@ import com.vaadin.flow.component.Html
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.checkbox.Checkbox
 import com.vaadin.flow.component.combobox.ComboBox
+import com.vaadin.flow.component.html.Anchor
 import com.vaadin.flow.component.html.Label
 import com.vaadin.flow.component.icon.Icon
 import com.vaadin.flow.component.icon.VaadinIcon
@@ -12,6 +13,8 @@ import com.vaadin.flow.component.menubar.MenuBar
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.textfield.TextField
+import com.vaadin.flow.router.RouteConfiguration
+import com.vaadin.flow.router.RouteParameters
 import org.dmg.dreamhubfront.*
 import org.dmg.dreamhubfront.StandardTypes.BOOLEAN
 import org.dmg.dreamhubfront.StandardTypes.DECIMAL
@@ -264,11 +267,15 @@ class ReferenceLine(private val item: ItemTreeNode) : EditableLine() {
         item.parent!!.remove(item)
         refreshItem(item.parent, true)
       }
-      val buttons = listOf(removeButton) + arrowButtons(item)
+      val buttons = listOf(nameButton(name, item.id()!!, settingId), removeButton) + arrowButtons(item)
 
-      listOf(StringLineElement(name), ComponentLineElement(buttons))
+      listOf(ComponentLineElement(buttons))
     } else {
-      listOf(StringLineElement(name, item.readOnly))
+      if (item.readOnly) {
+        listOf(StringLineElement(name, item.readOnly))
+      } else {
+        listOf(ComponentLineElement(listOf(nameButton(name, item.id()!!, settingId))))
+      }
     }
   }
 }
@@ -277,22 +284,18 @@ class ItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
     val name = item.getAsPrimitive() as String
     return if (editing && !item.readOnly) {
-      val editField = TextField().apply {
-        value = name
-        width = "25em"
-
-        addValueChangeListener {
-          item.setAsPrimitive(it.value)
-        }
-      }
       val removeButton = Button(Icon(VaadinIcon.CLOSE)) {
         item.parent!!.remove(item)
         refreshItem(item.parent, true)
       }
-      val button = listOf(editField, removeButton) + arrowButtons(item)
+      val button = listOf(nameButton(name, item.id()!!, settingId), removeButton) + arrowButtons(item)
       listOf(ComponentLineElement(button))
     } else {
-      listOf(StringLineElement(name, item.readOnly))
+      if (item.readOnly) {
+        listOf(StringLineElement(name, item.readOnly))
+      } else {
+        listOf(ComponentLineElement(listOf(nameButton(name, item.id()!!, settingId))))
+      }
     }
   }
 }
@@ -372,4 +375,16 @@ open class RefLine(private val item: ItemTreeNode) : EditableLine() {
       listOf(StringLineElement(name, item.readOnly))
     }
   }
+}
+
+private fun nameButton(name: String, id: Long, settingId: Long): Component {
+  val routeConfiguration = RouteConfiguration.forSessionScope()
+  val parameters = RouteParameters(
+    mutableMapOf(
+      "settingId" to settingId.toString(),
+      "itemId" to id.toString()
+    )
+  )
+  val url = routeConfiguration.getUrl(SettingView::class.java, parameters)
+  return Anchor(url, name)
 }
