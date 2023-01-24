@@ -9,20 +9,30 @@ import java.util.stream.Stream
 
 @Service
 class ItemsTreeDataProviderService(
-  private val itemApi: ItemApi
+  private val itemApi: ItemApi,
 ) {
   operator fun invoke(settingId: Long): ItemsTreeDataProvider = ItemsTreeDataProvider(itemApi, settingId)
 }
 
 class ItemsTreeDataProvider(
   private val itemApi: ItemApi,
-  private val settingId: Long
+  private val settingId: Long,
 ) : AbstractBackEndHierarchicalDataProvider<ItemListView, Any>() {
   private val root = "".toFolder()
   private var tree: MutableMap<ItemListView, MutableList<ItemListView>>
+  private var parents: Map<ItemListView, ItemListView>
+  private var index: Map<Long, ItemListView>
 
   init {
     tree = readTree()
+    parents = tree.entries.asSequence().flatMap { pair -> pair.value.asSequence().map { it to pair.key } }.associate { it }
+    index = tree
+      .values
+      .asSequence()
+      .flatten()
+      .filter { it.item != null }
+      .distinctBy { it.item!!.id }
+      .associateBy { it.item!!.id }
   }
 
   private fun readTree(): MutableMap<ItemListView, MutableList<ItemListView>> =
@@ -59,6 +69,9 @@ class ItemsTreeDataProvider(
       }
       .toMutableMap()
 
+  operator fun get(itemId: Long): List<ItemListView> =
+    index[itemId]?.let { generateSequence(it) { parents[it] }.toList().reversed() } ?: listOf()
+
   override fun refreshAll() {
     tree = readTree()
     super.refreshAll()
@@ -79,10 +92,10 @@ class ItemsTreeDataProvider(
 
   override fun hasChildren(item: ItemListView?): Boolean = item?.isFolder ?: false
 
-   override fun fetchChildrenFromBackEnd(query: HierarchicalQuery<ItemListView, Any>?): Stream<ItemListView> =
+  override fun fetchChildrenFromBackEnd(query: HierarchicalQuery<ItemListView, Any>?): Stream<ItemListView> =
     (query?.parent ?: root)
       .let { children(it) }
-      ?.sortedWith(compareByDescending<ItemListView> { it.isFolder }.thenBy { it.name } )
+      ?.sortedWith(compareByDescending<ItemListView> { it.isFolder }.thenBy { it.name })
       ?.stream()
       ?: Stream.empty()
 
