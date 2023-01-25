@@ -267,15 +267,11 @@ class ReferenceLine(private val item: ItemTreeNode) : EditableLine() {
         item.parent!!.remove(item)
         refreshItem(item.parent, true)
       }
-      val buttons = listOf(nameButton(name, item.id()!!, settingId), removeButton) + arrowButtons(item)
+      val buttons = listOf(nameButton(name, item.id()!!, settingId, false), removeButton) + arrowButtons(item)
 
       listOf(ComponentLineElement(buttons))
     } else {
-      if (item.readOnly) {
-        listOf(StringLineElement(name, item.readOnly))
-      } else {
-        listOf(ComponentLineElement(listOf(nameButton(name, item.id()!!, settingId))))
-      }
+      listOf(ComponentLineElement(listOf(nameButton(name, item.id()!!, settingId, item.readOnly))))
     }
   }
 }
@@ -288,14 +284,10 @@ class ItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
         item.parent!!.remove(item)
         refreshItem(item.parent, true)
       }
-      val button = listOf(nameButton(name, item.id()!!, settingId), removeButton) + arrowButtons(item)
+      val button = listOf(nameButton(name, item.id()!!, settingId, false), removeButton) + arrowButtons(item)
       listOf(ComponentLineElement(button))
     } else {
-      if (item.readOnly) {
-        listOf(StringLineElement(name, item.readOnly))
-      } else {
-        listOf(ComponentLineElement(listOf(nameButton(name, item.id()!!, settingId))))
-      }
+      listOf(ComponentLineElement(listOf(nameButton(name, item.id()!!, settingId, item.readOnly))))
     }
   }
 }
@@ -377,7 +369,7 @@ open class RefLine(private val item: ItemTreeNode) : EditableLine() {
   }
 }
 
-private fun nameButton(name: String, id: Long, settingId: Long): Component {
+private fun nameButton(name: String, id: Long, settingId: Long, readOnly: Boolean): Component {
   val routeConfiguration = RouteConfiguration.forSessionScope()
   val parameters = RouteParameters(
     mutableMapOf(
@@ -386,5 +378,9 @@ private fun nameButton(name: String, id: Long, settingId: Long): Component {
     )
   )
   val url = routeConfiguration.getUrl(SettingView::class.java, parameters)
-  return Anchor(url, name)
+  return Anchor(url, name).also {
+    if (readOnly) {
+      it.style["font-style"] = "italic"
+    }
+  }
 }
