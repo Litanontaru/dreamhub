@@ -28,4 +28,13 @@ interface SettingController {
 
   @DeleteMapping("/settings/{settingId}/dependencies/{oldDependencyId}")
   fun removeDependency(@PathVariable settingId: Long, @PathVariable oldDependencyId: Long)
+
+  @GetMapping("/settings/{settingId}/members")
+  fun getMembers(@PathVariable settingId: Long): List<SettingMember>
+
+  @PutMapping("/settings/{settingId}/members")
+  fun grantRoleToMember(@PathVariable settingId: Long, @RequestBody newMember: SettingMember)
+
+  @DeleteMapping("/settings/{settingId}/members")
+  fun revokeAccess(@PathVariable settingId: Long, @RequestBody email: String)
 }

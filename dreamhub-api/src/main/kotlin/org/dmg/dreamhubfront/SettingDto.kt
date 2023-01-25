@@ -11,3 +11,8 @@ class SettingDto {
   var description: String = ""
   var dependencies: MutableList<SettingListDto> = mutableListOf()
 }
+
+class SettingMember {
+  var userEmail: String = ""
+  var userRole: UserRoleType = UserRoleType.GUEST
+}

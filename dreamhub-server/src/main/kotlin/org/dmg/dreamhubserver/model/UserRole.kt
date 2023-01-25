@@ -1,5 +1,6 @@
 package org.dmg.dreamhubserver.model
 
+import org.dmg.dreamhubfront.UserRoleType
 import javax.persistence.Entity
 
 @Entity

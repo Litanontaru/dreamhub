@@ -1,7 +1,8 @@
-package org.dmg.dreamhubserver.model
+package org.dmg.dreamhubfront
 
 enum class UserRoleType {
   OWNER,
+  MAINTAINER,
   MEMBER,
   GUEST
 }

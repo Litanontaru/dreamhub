@@ -8,7 +8,7 @@ import org.dmg.dreamhubfront.TypeDto
 import org.dmg.dreamhubserver.model.Setting
 import org.dmg.dreamhubserver.model.User
 import org.dmg.dreamhubserver.model.UserRole
-import org.dmg.dreamhubserver.model.UserRoleType
+import org.dmg.dreamhubfront.UserRoleType
 import org.dmg.dreamhubserver.repository.SettingList
 import org.dmg.dreamhubserver.repository.SettingRepository
 import org.dmg.dreamhubserver.repository.UserRepository

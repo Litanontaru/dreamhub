@@ -7,4 +7,6 @@ interface UserRoleRepository: CrudRepository<UserRole, Long> {
   fun findAllByUserId(userId: Long): List<UserRole>
 
   fun findByUserIdAndSettingId(userId: Long, settingId: Long): UserRole?
+
+  fun findAllBySettingId(settingId: Long): List<UserRole>
 }
