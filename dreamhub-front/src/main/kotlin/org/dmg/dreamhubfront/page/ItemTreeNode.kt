@@ -559,3 +559,60 @@ class MultipleItemAttributeNode(
     }
   }
 }
+
+class SettingItemTreeNode(
+  private val settingDto: SettingDto,
+  private val settingController: SettingController,
+  parent: ItemTreeNode?,
+  readOnly: Boolean,
+) : ItemTreeNode(parent, readOnly) {
+  override fun name() = settingDto.id.toString()
+  override fun id(): Long = settingDto.id
+
+  override fun hasChildren(): Boolean = cachedCount() > 0
+
+  override fun count(): Int = cachedChildren().size
+
+  override fun canCompact() = cachedCount() == 1
+
+  override fun types() = listOf(TYPE)
+
+  override fun getAsPrimitive() = settingDto.name
+
+  override fun setAsPrimitive(newValue: Any?) {
+    when (newValue) {
+      is String -> {
+        settingController.setName(settingDto.id, newValue)
+        settingDto.name = newValue
+      }
+    }
+  }
+
+  override fun children(): List<ItemTreeNode> {
+    val children = mutableListOf(
+      SettingDescriptionNode(settingDto, settingController, this, false),
+    )
+//    if (itemDto.comboAllowedExtensions().isNotEmpty()) {
+//      children += ExtensionNode(itemDto, itemApi, this, false)
+//    }
+    return children
+  }
+}
+
+class SettingDescriptionNode(
+  val settingDto: SettingDto,
+  val settingController: SettingController,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ValueNode("Описание", STRING, parent, readOnly) {
+  override fun getAsPrimitive() = settingDto.description
+
+  override fun setAsPrimitive(newValue: Any?) {
+    when (newValue) {
+      is String -> {
+        settingController.setDescription(settingDto.id, newValue)
+        settingDto.description = newValue
+      }
+    }
+  }
+}

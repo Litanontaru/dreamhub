@@ -12,6 +12,7 @@ import com.vaadin.flow.function.SerializablePredicate
 import com.vaadin.flow.router.*
 import org.dmg.dreamhubfront.ItemDto
 import org.dmg.dreamhubfront.ItemListDto
+import org.dmg.dreamhubfront.SettingController
 import org.dmg.dreamhubfront.feign.ItemApi
 import javax.annotation.security.PermitAll
 
@@ -19,6 +20,7 @@ import javax.annotation.security.PermitAll
 @PermitAll
 class SettingView(
   private val itemApi: ItemApi,
+  private val settingController: SettingController,
   private val itemsTreeDataProviderService: ItemsTreeDataProviderService,
   private val itemTreeDataProviderService: ItemTreeDataProviderService,
 ) : HorizontalLayout(), BeforeEnterObserver {
@@ -45,7 +47,7 @@ class SettingView(
 
   private fun set(settingId: Long) {
     if (settingId != this.settingId) {
-      view = ItemView(itemApi, itemTreeDataProviderService, settingId)
+      view = ItemView(itemApi, settingController, itemTreeDataProviderService, settingId)
 
       dataProvider = itemsTreeDataProviderService(settingId)
 
@@ -154,9 +156,9 @@ class SettingView(
       tree.setDataProvider(dataProvider)
       tree.addThemeVariants(GridVariant.LUMO_COMPACT)
       tree.addItemClickListener {
-        it.item.item?.let {
-          view.itemId = it.id
-          itemId = it.id
+        (it.item.item?.id ?: it.item.setting?.let { -2 })?.let {
+          view.itemId = it
+          itemId = it
           history()
         }
       }

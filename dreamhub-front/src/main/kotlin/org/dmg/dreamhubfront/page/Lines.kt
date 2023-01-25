@@ -62,6 +62,7 @@ object Lines {
 
   private fun toComponent(node: ItemTreeNode): EditableLine = when (node) {
     is MainItemDtoTreeNode -> MainItemDtoLine(node)
+    is SettingItemTreeNode -> SettingItemDtoLine(node)
     is ReferenceItemDtoTreeNode -> ReferenceLine(node)
     is ItemDtoTreeNode -> ItemDtoLine(node)
     is ValueNode -> when (node.types().first()) {
@@ -363,6 +364,26 @@ open class RefLine(private val item: ItemTreeNode) : EditableLine() {
         buttons.isNotEmpty() -> listOf(StringLineElement(name), ComponentLineElement(buttons))
         else -> listOf(StringLineElement(name))
       }
+    } else {
+      listOf(StringLineElement(name, item.readOnly))
+    }
+  }
+}
+
+class SettingItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
+  override fun getElements(editing: Boolean): List<LineElement> {
+    val name = item.getAsPrimitive() as String
+    return if (editing && !item.readOnly) {
+      val editField = TextField().apply {
+        value = name
+        width = "25em"
+
+        addValueChangeListener {
+          item.setAsPrimitive(it.value)
+        }
+      }
+
+      listOf(ComponentLineElement(editField))
     } else {
       listOf(StringLineElement(name, item.readOnly))
     }

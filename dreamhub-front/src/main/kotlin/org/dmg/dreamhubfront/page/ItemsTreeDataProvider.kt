@@ -3,28 +3,36 @@ package org.dmg.dreamhubfront.page
 import com.vaadin.flow.data.provider.hierarchy.AbstractBackEndHierarchicalDataProvider
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalQuery
 import org.dmg.dreamhubfront.ItemListDto
+import org.dmg.dreamhubfront.SettingController
+import org.dmg.dreamhubfront.SettingDto
 import org.dmg.dreamhubfront.feign.ItemApi
 import org.springframework.stereotype.Service
 import java.util.stream.Stream
 
 @Service
 class ItemsTreeDataProviderService(
-  private val itemApi: ItemApi,
+  private val settingController: SettingController,
+  private val itemApi: ItemApi
 ) {
-  operator fun invoke(settingId: Long): ItemsTreeDataProvider = ItemsTreeDataProvider(itemApi, settingId)
+  operator fun invoke(settingId: Long): ItemsTreeDataProvider = ItemsTreeDataProvider(settingController, itemApi, settingId)
 }
 
 class ItemsTreeDataProvider(
+  private val settingController: SettingController,
   private val itemApi: ItemApi,
   private val settingId: Long,
 ) : AbstractBackEndHierarchicalDataProvider<ItemListView, Any>() {
+
+  private lateinit var setting: SettingDto
   private val root = "".toFolder()
   private var tree: MutableMap<ItemListView, MutableList<ItemListView>>
   private var parents: Map<ItemListView, ItemListView>
   private var index: Map<Long, ItemListView>
 
   init {
+    setting = settingController.getSettingById(settingId)!!
     tree = readTree()
+    tree[root]?.add(setting.toTerminal())
     parents = tree.entries.asSequence().flatMap { pair -> pair.value.asSequence().map { it to pair.key } }.associate { it }
     index = tree
       .values
@@ -128,8 +136,14 @@ class ItemsTreeDataProvider(
   }
 }
 
-data class ItemListView(var name: String, var path: String, val item: ItemListDto? = null) {
-  val isFolder: Boolean = item == null
+data class ItemListView(
+  var name: String,
+  var path: String,
+  val item: ItemListDto? = null,
+  val setting: SettingDto? = null
+) {
+  val isFolder: Boolean = item == null && setting == null
+  val isSetting: Boolean = setting != null
   val fullName = path.takeIf { it.isNotBlank() }?.let { "$it.$name" } ?: name
 }
 
@@ -140,3 +154,9 @@ fun String.toFolder(): ItemListView =
   }
 
 fun ItemListDto.toTerminal(): ItemListView = ItemListView(name, path, this)
+
+fun SettingDto.toTerminal(): ItemListView = ItemListView(
+  name = name,
+  path = "",
+  setting = this
+)
