@@ -2,13 +2,10 @@ package org.dmg.dreamhubserver.service
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.dmg.dreamhubfront.SettingDto
-import org.dmg.dreamhubfront.SettingListDto
-import org.dmg.dreamhubfront.TypeDto
+import org.dmg.dreamhubfront.*
 import org.dmg.dreamhubserver.model.Setting
 import org.dmg.dreamhubserver.model.User
 import org.dmg.dreamhubserver.model.UserRole
-import org.dmg.dreamhubfront.UserRoleType
 import org.dmg.dreamhubserver.repository.SettingList
 import org.dmg.dreamhubserver.repository.SettingRepository
 import org.dmg.dreamhubserver.repository.UserRepository
@@ -36,7 +33,7 @@ class SettingService(
       ?.let { userRoleRepository.findByUserIdAndSettingId(it, settingId) }
       ?.role
 
-  fun getAllSettings(userEmail: String): List<SettingListDto> =
+  fun getAllSettings(userEmail: String): List<ItemName> =
     getRoles(userEmail)
       .let { settingRepository.getAll(it.keys.toList()) }
       .map { it.toDto() }
@@ -102,8 +99,8 @@ fun String.toListDto(): List<TypeDto> = when {
   else -> ObjectMapper().readValue(this, object : TypeReference<List<TypeDto>>() {})
 }
 
-fun SettingList.toDto(): SettingListDto {
-  return SettingListDto().also {
+fun SettingList.toDto(): ItemName {
+  return ItemName().also {
     it.id = this.getId()
     it.name = this.getName()
   }

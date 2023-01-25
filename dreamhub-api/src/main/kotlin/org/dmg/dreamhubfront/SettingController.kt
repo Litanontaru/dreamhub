@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*
 @FeignClient(name = "api.setting", url = "\${backend-url}")
 interface SettingController {
   @GetMapping("/settings")
-  fun getAllSettings() : List<SettingListDto>
+  fun getAllSettings() : List<ItemName>
 
   @GetMapping("/settings/{settingId}")
   fun getSettingById(@PathVariable settingId: Long): SettingDto?

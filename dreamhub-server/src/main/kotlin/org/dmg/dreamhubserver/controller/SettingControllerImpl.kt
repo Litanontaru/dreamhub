@@ -1,9 +1,6 @@
 package org.dmg.dreamhubserver.controller
 
-import org.dmg.dreamhubfront.SettingController
-import org.dmg.dreamhubfront.SettingDto
-import org.dmg.dreamhubfront.SettingListDto
-import org.dmg.dreamhubfront.SettingMember
+import org.dmg.dreamhubfront.*
 import org.dmg.dreamhubserver.service.SettingMemberService
 import org.dmg.dreamhubserver.service.SettingService
 import org.springframework.web.bind.annotation.RestController
@@ -13,7 +10,7 @@ class SettingControllerImpl(
   val settingService: SettingService,
   val settingMemberService: SettingMemberService
 ): SettingController {
-  override fun getAllSettings(): List<SettingListDto> = settingService.getAllSettings(UserSession.userEmail)
+  override fun getAllSettings(): List<ItemName> = settingService.getAllSettings(UserSession.userEmail)
 
   override fun getSettingById(settingId: Long): SettingDto?  = settingService.getSettingById(UserSession.userEmail, settingId)
 

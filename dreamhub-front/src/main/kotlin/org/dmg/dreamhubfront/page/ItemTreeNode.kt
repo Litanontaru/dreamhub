@@ -639,7 +639,7 @@ class SettingDependencyNode(
   override fun inAdd(value: ItemName) {
     settingController
       .addDependency(settingDto.id, value.id)
-      .let { settingDto.dependencies.add(SettingListDto().apply { id = value.id; name = value.name }) }
+      .let { settingDto.dependencies.add(ItemName().apply { id = value.id; name = value.name }) }
   }
 
   override fun inRemove(node: ItemTreeNode) {
@@ -656,7 +656,7 @@ class SettingDependencyNode(
 }
 
 class ReferenceSettingItemTreeNode(
-  private val settingListDto: SettingListDto,
+  private val settingListDto: ItemName,
   parent: ItemTreeNode?,
   readOnly: Boolean,
 ) : ItemTreeNode(parent, readOnly) {

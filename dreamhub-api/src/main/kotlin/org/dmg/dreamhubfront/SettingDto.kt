@@ -1,15 +1,10 @@
 package org.dmg.dreamhubfront
 
-class SettingListDto{
-  var id: Long = 0
-  var name: String = ""
-}
-
 class SettingDto {
   var id: Long = 0
   var name: String = ""
   var description: String = ""
-  var dependencies: MutableList<SettingListDto> = mutableListOf()
+  var dependencies: MutableList<ItemName> = mutableListOf()
 }
 
 class SettingMember {
