@@ -130,6 +130,7 @@ abstract class ItemDtoTreeNode(
         itemApi.setName(itemDto.id, itemDto.nestedId, "'$newValue'")
         itemDto.name = newValue
       }
+
       is ItemDto -> {
         itemDto = newValue
       }
@@ -144,14 +145,16 @@ class MainItemDtoTreeNode(
 
   override fun children(): List<ItemTreeNode> {
     return track("all\t${itemDto.id}/${itemDto.nestedId}") {
-      val children = track("generic\t${itemDto.id}/${itemDto.nestedId}") { mutableListOf(
-        FormulaNode(itemDto, itemApi, this, false),
-        IsTypeNode(itemDto, itemApi, this, false),
-        DescriptionNode(itemDto, itemApi, this, false),
-        GroupsNode(itemDto, itemApi, this, false),
-        TypeNode(itemDto, itemApi, this, false),
-        AllowedExtensionsNode(itemDto, itemApi, this, false),
-      )}
+      val children = track("generic\t${itemDto.id}/${itemDto.nestedId}") {
+        mutableListOf(
+          FormulaNode(itemDto, itemApi, this, false),
+          IsTypeNode(itemDto, itemApi, this, false),
+          DescriptionNode(itemDto, itemApi, this, false),
+          GroupsNode(itemDto, itemApi, this, false),
+          TypeNode(itemDto, itemApi, this, false),
+          AllowedExtensionsNode(itemDto, itemApi, this, false),
+        )
+      }
       if (itemDto.comboAllowedExtensions().isNotEmpty()) {
         children += ExtensionNode(itemDto, itemApi, this, false)
       }
@@ -591,10 +594,8 @@ class SettingItemTreeNode(
   override fun children(): List<ItemTreeNode> {
     val children = mutableListOf(
       SettingDescriptionNode(settingDto, settingController, this, false),
+      SettingDependencyNode(settingDto, settingController, this, false)
     )
-//    if (itemDto.comboAllowedExtensions().isNotEmpty()) {
-//      children += ExtensionNode(itemDto, itemApi, this, false)
-//    }
     return children
   }
 }
@@ -615,4 +616,56 @@ class SettingDescriptionNode(
       }
     }
   }
+}
+
+class SettingDependencyNode(
+  private val settingDto: SettingDto,
+  private val settingController: SettingController,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ItemTreeNode(parent, readOnly) {
+  override fun name(): String = "Зависимости"
+  override fun id(): Long = settingDto.id
+
+  override fun hasChildren(): Boolean = settingDto.dependencies.isNotEmpty()
+
+  override fun children(): List<ItemTreeNode> =
+    settingDto.dependencies
+      .withIndex()
+      .map { ReferenceSettingItemTreeNode(it.value, this, readOnly) }.toList()
+
+  override fun count() = settingDto.dependencies.count()
+
+  override fun inAdd(value: ItemName) {
+    settingController
+      .addDependency(settingDto.id, value.id)
+      .let { settingDto.dependencies.add(SettingListDto().apply { id = value.id; name = value.name }) }
+  }
+
+  override fun inRemove(node: ItemTreeNode) {
+    when (node) {
+      is ReferenceSettingItemTreeNode -> {
+        settingController
+          .removeDependency(settingDto.id, node.id()!!)
+          .let { parent?.setAsPrimitive(it) }
+      }
+    }
+  }
+
+  override fun isSingle(): Boolean = false
+}
+
+class ReferenceSettingItemTreeNode(
+  private val settingListDto: SettingListDto,
+  parent: ItemTreeNode?,
+  readOnly: Boolean,
+) : ItemTreeNode(parent, readOnly) {
+  override fun name() = settingListDto.id.toString()
+  override fun getAsPrimitive() = settingListDto.name
+
+  override fun hasChildren(): Boolean = false
+
+  override fun children(): List<ItemTreeNode> = listOf()
+
+  override fun count(): Int = 0
 }

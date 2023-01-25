@@ -64,6 +64,7 @@ object Lines {
     is MainItemDtoTreeNode -> MainItemDtoLine(node)
     is SettingItemTreeNode -> SettingItemDtoLine(node)
     is ReferenceItemDtoTreeNode -> ReferenceLine(node)
+    is ReferenceSettingItemTreeNode -> ReferenceSettingItemDtoLine(node)
     is ItemDtoTreeNode -> ItemDtoLine(node)
     is ValueNode -> when (node.types().first()) {
       STRING -> StringLine(node, "35em")
@@ -386,6 +387,23 @@ class SettingItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
       listOf(ComponentLineElement(editField))
     } else {
       listOf(StringLineElement(name, item.readOnly))
+    }
+  }
+}
+
+class ReferenceSettingItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
+  override fun getElements(editing: Boolean): List<LineElement> {
+    val name = item.getAsPrimitive() as String
+    return if (editing && !item.readOnly) {
+      val removeButton = Button(Icon(VaadinIcon.CLOSE)) {
+        item.parent!!.remove(item)
+        refreshItem(item.parent, true)
+      }
+      val buttons = listOf(nameButton(name, -2, settingId, false), removeButton)
+
+      listOf(ComponentLineElement(buttons))
+    } else {
+      listOf(ComponentLineElement(listOf(nameButton(name, -2, settingId, item.readOnly))))
     }
   }
 }
