@@ -3,9 +3,11 @@ package org.dmg.dreamhubserver.controller
 import org.dmg.dreamhubfront.*
 import org.dmg.dreamhubserver.service.SettingMemberService
 import org.dmg.dreamhubserver.service.SettingService
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@Transactional
 class SettingControllerImpl(
   val settingService: SettingService,
   val settingMemberService: SettingMemberService
@@ -23,19 +25,19 @@ class SettingControllerImpl(
   }
 
   override fun setName(settingId: Long, newName: String) {
-    TODO("Not yet implemented")
+    settingService.setName(settingId, newName)
   }
 
   override fun setDescription(settingId: Long, newDescription: String) {
-    TODO("Not yet implemented")
+    settingService.setDescription(settingId, newDescription)
   }
 
   override fun addDependency(settingId: Long, newDependencyId: Long) {
-    TODO("Not yet implemented")
+    settingService.addDependency(settingId, newDependencyId)
   }
 
   override fun removeDependency(settingId: Long, oldDependencyId: Long) {
-    TODO("Not yet implemented")
+    settingService.removeDependency(settingId, oldDependencyId)
   }
 
   override fun getMembers(settingId: Long): List<SettingMember> {

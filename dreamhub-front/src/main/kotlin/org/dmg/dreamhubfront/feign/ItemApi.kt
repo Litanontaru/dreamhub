@@ -5,7 +5,10 @@ import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 
 @Service
-class ItemApi(private val itemController: ItemController) {
+class ItemApi(
+  private val itemController: ItemController,
+  private val settingController: SettingController,
+) {
   fun getAll(settingId: Long, filter: String?, findUsages: Long?): List<ItemListDto> {
     return itemController.getAll(settingId, filter, findUsages)
   }
@@ -16,7 +19,13 @@ class ItemApi(private val itemController: ItemController) {
   }
 
   fun getSubItems(settingId: Long, superTypeIds: List<Long>): List<ItemListDto> {
-    return itemController.getSubItems(settingId, superTypeIds)
+    return if (superTypeIds.contains(SpecialTypes.SETTING.id)) {
+      settingController.getAllSettings().map { ItemListDto().apply { id = it.id; name = it.name } }
+    } else if (superTypeIds.contains(SpecialTypes.ROLE.id)) {
+      UserRoleType.values().map { it.toItemListDto() }
+    } else {
+      itemController.getSubItems(settingId, superTypeIds)
+    }
   }
 
   operator fun get(id: Long): ItemDto {

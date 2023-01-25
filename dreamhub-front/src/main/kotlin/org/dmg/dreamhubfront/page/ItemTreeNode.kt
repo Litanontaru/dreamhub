@@ -5,6 +5,7 @@ import org.dmg.dreamhubfront.StandardTypes.BOOLEAN
 import org.dmg.dreamhubfront.StandardTypes.STRING
 import org.dmg.dreamhubfront.StandardTypes.TYPE
 import org.dmg.dreamhubfront.feign.ItemApi
+import org.dmg.dreamhubfront.feign.SpecialTypes
 import org.dmg.dreamhubfront.formula.NanDecimal
 import org.dmg.dreamhubfront.formula.formula
 import org.dmg.dreamhubfront.formula.rate
@@ -646,11 +647,13 @@ class SettingDependencyNode(
     when (node) {
       is ReferenceSettingItemTreeNode -> {
         settingController
-          .removeDependency(settingDto.id, node.id()!!)
-          .let { parent?.setAsPrimitive(it) }
+          .removeDependency(settingDto.id, node.id())
+          .let { settingDto.dependencies.removeIf { it.id == node.id() } }
       }
     }
   }
+
+  override fun types(): List<ItemName> = listOf(SpecialTypes.SETTING)
 
   override fun isSingle(): Boolean = false
 }
@@ -661,6 +664,7 @@ class ReferenceSettingItemTreeNode(
   readOnly: Boolean,
 ) : ItemTreeNode(parent, readOnly) {
   override fun name() = settingListDto.id.toString()
+  override fun id() = settingListDto.id
   override fun getAsPrimitive() = settingListDto.name
 
   override fun hasChildren(): Boolean = false

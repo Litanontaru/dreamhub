@@ -82,6 +82,16 @@ class SettingService(
       ?.let { settingRepository.deleteById(settingId) }
   }
 
+  fun setName(settingId: Long, newName: String) {
+    val setting = settingRepository.findById(settingId).get()
+    setting.name = newName
+  }
+
+  fun setDescription(settingId: Long, newDescription: String) {
+    val setting = settingRepository.findById(settingId).get()
+    setting.description = newDescription
+  }
+
   //--------------------------------------------------------------------------------------------------------------------
 
   fun getDependencies(settingId: Long): List<Long> =
@@ -92,6 +102,16 @@ class SettingService(
       .split(",")
       .mapNotNull { it.toLongOrNull() }
       .flatMap { getDependencies(it) }
+
+  fun addDependency(settingId: Long, newDependencyId: Long) {
+    val setting = settingRepository.findById(settingId).get()
+    setting.dependencies = setting.dependencies.split(",").let { it + newDependencyId.toString() }.joinToString(",")
+  }
+
+  fun removeDependency(settingId: Long, oldDependencyId: Long) {
+    val setting = settingRepository.findById(settingId).get()
+    setting.dependencies = setting.dependencies.split(",").let { it - oldDependencyId.toString() }.joinToString(",")
+  }
 }
 
 fun String.toListDto(): List<TypeDto> = when {
