@@ -9,4 +9,6 @@ interface UserRoleRepository: CrudRepository<UserRole, Long> {
   fun findByUserIdAndSettingId(userId: Long, settingId: Long): UserRole?
 
   fun findAllBySettingId(settingId: Long): List<UserRole>
+
+  fun countAllBySettingId(settingId: Long): Int
 }

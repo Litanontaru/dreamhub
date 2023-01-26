@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service
 class SettingService(
   val settingRepository: SettingRepository,
   val userRepository: UserRepository,
-  val userRoleRepository: UserRoleRepository
+  val userRoleRepository: UserRoleRepository,
 ) {
   private fun getRoles(userEmail: String): Map<Long, UserRoleType> =
     userRepository
@@ -63,17 +63,15 @@ class SettingService(
       settingRepository.save(it)
       it.id
     }
-    (userRepository.findByEmail(userEmail) ?: User().apply {
-      email = userEmail
-      userRepository.save(this)
-    }).let {
-      UserRole().apply {
-        userId = it.id
-        settingId = newSettingId
-        role = UserRoleType.OWNER
-        userRoleRepository.save(this)
+    (userRepository.findByEmail(userEmail) ?: User().apply { email = userEmail; userRepository.save(this) })
+      .let {
+        UserRole().apply {
+          userId = it.id
+          settingId = newSettingId
+          role = UserRoleType.OWNER
+          userRoleRepository.save(this)
+        }
       }
-    }
   }
 
   fun removeSetting(userEmail: String, settingId: Long) {

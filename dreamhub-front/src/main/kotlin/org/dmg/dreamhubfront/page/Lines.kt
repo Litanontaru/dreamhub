@@ -76,6 +76,8 @@ object Lines {
     }
     is MetadataNode -> MetadataLine(node)
     is ItemNameNode -> ItemNameLine(node)
+    is SettingMemberListTreeNode -> SettingMemberListLine(node)
+    is SettingMemberTreeNode -> SettingMemberLine(node)
     else -> RefLine(node)
   }
 }
@@ -136,6 +138,7 @@ open class EditableLine {
       }
       listOf(upButton, downButton)
     }
+
     else -> listOf()
   }
 }
@@ -169,7 +172,7 @@ class StringLine(private val item: ItemTreeNode, private val editWidth: String, 
 
 class BooleanLine(private val item: ValueNode) : EditableLine() {
   override fun getElements(editing: Boolean): List<LineElement> {
-    val (initial, default) = when (val i = item.getAsPrimitive()) {
+    val (initial, _) = when (val i = item.getAsPrimitive()) {
       is Boolean -> i to false
       is Pair<*, *> -> (i.first?.toString()?.toBoolean() ?: false) to (i.second?.toString()?.toBoolean() ?: false)
       else -> false to false
@@ -404,6 +407,43 @@ class ReferenceSettingItemDtoLine(private val item: ItemTreeNode) : EditableLine
       listOf(ComponentLineElement(buttons))
     } else {
       listOf(ComponentLineElement(listOf(nameButton(name, -2, settingId, item.readOnly))))
+    }
+  }
+}
+
+class SettingMemberListLine(private val item: ItemTreeNode) : EditableLine() {
+  override fun getElements(editing: Boolean): List<LineElement> {
+    val name = item.name()?.let { "$it:" } ?: ""
+    return if (editing && !item.readOnly) {
+      val addButton = Button(Icon(VaadinIcon.PLUS)) {
+        EditDialog("Email", "@gmail.com") {
+          item.add(ItemName().apply { this.name = it })
+          refreshItem(item, true)
+        }.open()
+      }
+      listOf(StringLineElement(name), ComponentLineElement(listOf(addButton)))
+    } else {
+      listOf(StringLineElement(name, item.readOnly))
+    }
+  }
+}
+
+class SettingMemberLine(private val item: ItemTreeNode) : EditableLine() {
+  override fun getElements(editing: Boolean): List<LineElement> {
+    val initial = item.getAsPrimitive() as UserRoleType
+
+    return if (editing && !item.readOnly) {
+      val editField = ComboBox<UserRoleType>().apply {
+        setItems(UserRoleType.values().toList())
+        value = initial
+        addValueChangeListener {
+          item.setAsPrimitive(it.value)
+        }
+      }
+
+      listOf(StringLineElement("${item.name()}: "), ComponentLineElement(editField))
+    } else {
+      listOf(StringLineElement("${item.name()}: $initial", item.readOnly))
     }
   }
 }

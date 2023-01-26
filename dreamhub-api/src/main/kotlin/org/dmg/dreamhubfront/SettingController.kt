@@ -32,6 +32,9 @@ interface SettingController {
   @GetMapping("/settings/{settingId}/members")
   fun getMembers(@PathVariable settingId: Long): List<SettingMember>
 
+  @GetMapping("/settings/{settingId}/members/count")
+  fun getMembersCount(@PathVariable settingId: Long): Int
+
   @PutMapping("/settings/{settingId}/members")
   fun grantRoleToMember(@PathVariable settingId: Long, @RequestBody newMember: SettingMember)
 

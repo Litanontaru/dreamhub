@@ -44,6 +44,10 @@ class SettingControllerImpl(
     return settingMemberService.getMembers(settingId)
   }
 
+  override fun getMembersCount(settingId: Long): Int {
+    return settingMemberService.getMembersCount(settingId)
+  }
+
   override fun grantRoleToMember(settingId: Long, newMember: SettingMember) {
     settingMemberService.grantRoleToMember(settingId, newMember)
   }

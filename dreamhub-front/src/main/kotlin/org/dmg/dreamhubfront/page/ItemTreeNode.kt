@@ -595,7 +595,8 @@ class SettingItemTreeNode(
   override fun children(): List<ItemTreeNode> {
     val children = mutableListOf(
       SettingDescriptionNode(settingDto, settingController, this, false),
-      SettingDependencyNode(settingDto, settingController, this, false)
+      SettingDependencyNode(settingDto, settingController, this, false),
+      SettingMemberListTreeNode(settingDto, settingController, this, false)
     )
     return children
   }
@@ -672,4 +673,66 @@ class ReferenceSettingItemTreeNode(
   override fun children(): List<ItemTreeNode> = listOf()
 
   override fun count(): Int = 0
+}
+
+class SettingMemberListTreeNode(
+  private val settingDto: SettingDto,
+  private val settingController: SettingController,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ItemTreeNode(parent, readOnly) {
+  override fun name(): String = "Пользователи"
+  override fun id(): Long = settingDto.id
+
+  override fun hasChildren(): Boolean = true
+
+  override fun children(): List<ItemTreeNode> =
+    settingController.getMembers(settingDto.id)
+      .withIndex()
+      .map { SettingMemberTreeNode(settingDto, it.value, settingController, this, readOnly) }.toList()
+
+  override fun count() = settingController.getMembersCount(settingDto.id)
+
+  override fun inAdd(value: ItemName) {
+    settingController
+      .grantRoleToMember(settingDto.id, SettingMember().apply { userEmail = value.name; userRole = UserRoleType.GUEST })
+  }
+
+  override fun inRemove(node: ItemTreeNode) {
+    when (node) {
+      is ReferenceSettingItemTreeNode -> {
+        settingController
+          .revokeAccess(settingDto.id, node.name())
+      }
+    }
+  }
+
+  override fun isSingle(): Boolean = false
+}
+
+class SettingMemberTreeNode(
+  private val settingDto: SettingDto,
+  private val settingMember: SettingMember,
+  private val settingController: SettingController,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ItemTreeNode(parent, readOnly) {
+  override fun name(): String = settingMember.userEmail
+
+  override fun hasChildren(): Boolean = false
+
+  override fun children(): List<ItemTreeNode> = listOf()
+
+  override fun count(): Int = 0
+
+  override fun getAsPrimitive() = settingMember.userRole
+
+  override fun setAsPrimitive(newValue: Any?) {
+    when (newValue) {
+      is UserRoleType -> {
+        settingMember.userRole = newValue
+        settingController.grantRoleToMember(settingDto.id, settingMember)
+      }
+    }
+  }
 }
