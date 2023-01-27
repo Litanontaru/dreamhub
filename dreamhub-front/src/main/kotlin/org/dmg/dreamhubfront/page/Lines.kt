@@ -440,8 +440,12 @@ class SettingMemberLine(private val item: ItemTreeNode) : EditableLine() {
           item.setAsPrimitive(it.value)
         }
       }
+      val removeButton = Button(Icon(VaadinIcon.CLOSE)) {
+        item.parent!!.remove(item)
+        refreshItem(item.parent, true)
+      }
 
-      listOf(StringLineElement("${item.name()}: "), ComponentLineElement(editField))
+      listOf(StringLineElement("${item.name()}: "), ComponentLineElement(editField, removeButton))
     } else {
       listOf(StringLineElement("${item.name()}: $initial", item.readOnly))
     }

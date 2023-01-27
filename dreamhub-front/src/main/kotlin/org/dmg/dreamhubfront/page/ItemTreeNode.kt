@@ -700,7 +700,7 @@ class SettingMemberListTreeNode(
 
   override fun inRemove(node: ItemTreeNode) {
     when (node) {
-      is ReferenceSettingItemTreeNode -> {
+      is SettingMemberTreeNode -> {
         settingController
           .revokeAccess(settingDto.id, node.name())
       }
