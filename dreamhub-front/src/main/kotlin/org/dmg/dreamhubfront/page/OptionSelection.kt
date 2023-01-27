@@ -40,6 +40,11 @@ class OptionSelection(
         this.setItems(dataProvider)
 
         addThemeVariants(GridVariant.LUMO_NO_BORDER)
+
+        addItemDoubleClickListener {
+          onSelect(it.item)
+          close()
+        }
       }
 
       add(filter)
