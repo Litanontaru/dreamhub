@@ -42,6 +42,7 @@ class ItemService(
         }
       }
       .distinctBy { it.getId() }
+      .sortedWith(compareBy({ it.getRank() }, { it.getName() }))
       .map { it.toDto() }
       .sortedBy { it.name }
 
