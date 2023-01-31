@@ -289,7 +289,14 @@ class ItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
         item.parent!!.remove(item)
         refreshItem(item.parent, true)
       }
-      val button = listOf(nameButton(name, item.id()!!, settingId, false), removeButton) + arrowButtons(item)
+      val editButton = Button(Icon(VaadinIcon.EDIT)) {
+        EditDialog("Переименовать", name) {
+          item.setAsPrimitive(it)
+          refreshItem(item, true)
+        }.open()
+      }
+      val nameComponent = nameButton(name, item.id()!!, settingId, false)
+      val button = listOf(nameComponent, editButton, removeButton) + arrowButtons(item)
       listOf(ComponentLineElement(button))
     } else {
       listOf(ComponentLineElement(listOf(nameButton(name, item.id()!!, settingId, item.readOnly))))
