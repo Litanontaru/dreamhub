@@ -189,6 +189,8 @@ open class ValueItemDtoTreeNode(
   parent: ItemTreeNode?,
   readOnly: Boolean,
 ) : ItemDtoTreeNode(itemDto, itemApi, parent, readOnly) {
+  override fun id() = itemDto.extends.firstOrNull()?.id ?: itemDto.id
+
   override fun children(): List<ItemTreeNode> {
     return when {
       itemDto.comboAllowedExtensions().isEmpty() -> childrenAttributes()
@@ -200,12 +202,14 @@ open class ValueItemDtoTreeNode(
 }
 
 class ReferenceItemDtoTreeNode(
-  itemDto: AbstractItemDto,
+  private val itemDto: AbstractItemDto,
   itemApi: ItemApi,
   index: Int,
   parent: ItemTreeNode?,
   readOnly: Boolean,
 ) : ValueItemDtoTreeNode(itemDto, itemApi, index, parent, readOnly) {
+  override fun id(): Long = itemDto.id
+
   override fun children(): List<ItemTreeNode> = childrenAttributes().toList()
 }
 
