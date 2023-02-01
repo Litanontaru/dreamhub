@@ -152,7 +152,7 @@ class MainItemDtoTreeNode(
           IsTypeNode(itemDto, itemApi, this, false),
           DescriptionNode(itemDto, itemApi, this, false),
           GroupsNode(itemDto, itemApi, this, false),
-          TypeNode(itemDto, itemApi, this, false),
+          TypesTreeNode(itemDto, itemApi, this, false),
           AllowedExtensionsNode(itemDto, itemApi, this, false),
         )
       }
@@ -339,11 +339,6 @@ abstract class ExtendsNode(
   override fun name(): String = name
   override fun id(): Long = itemDto.id
 
-  protected fun innerExtends() = when (parent) {
-    is MainItemDtoTreeNode -> itemDto.extendsItems()
-    else -> sequenceOf()
-  }
-
   protected abstract fun extends(): Sequence<ItemDto>
 
   override fun hasChildren(): Boolean = extends().any()
@@ -372,17 +367,6 @@ abstract class ExtendsNode(
   }
 
   override fun isSingle(): Boolean = false
-}
-
-class TypeNode(
-  private val itemDto: AbstractItemDto,
-  itemApi: ItemApi,
-  parent: ItemTreeNode,
-  readOnly: Boolean,
-) : ExtendsNode("Тип", itemDto, itemApi, parent, readOnly) {
-  override fun extends() = itemDto.extendsItems().filter { it.isType }
-
-  override fun types() = listOf(TYPE)
 }
 
 class ExtensionNode(
@@ -739,4 +723,39 @@ class SettingMemberTreeNode(
       }
     }
   }
+}
+
+open class ValuesTreeNode(
+  private val name: String,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ItemTreeNode(parent, readOnly) {
+  override fun name() = name
+
+  override fun hasChildren() = false
+
+  override fun children(): List<ItemTreeNode> = listOf()
+
+  override fun count() = 0
+}
+
+class TypesTreeNode(
+  private val itemDto: ItemDto,
+  private val itemApi: ItemApi,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ValuesTreeNode("Тип", parent, readOnly) {
+  override fun getAsPrimitive() = itemDto.extendsItems().filter { it.isType }.toList()
+
+  override fun setAsPrimitive(newValue: Any?) {
+    if (newValue is Pair<*, *>) {
+      if (newValue.first is ItemName) {
+        itemApi.addExtends(itemDto.id, -1, (newValue.first as ItemName).id)
+      } else if (newValue.second is ItemName) {
+        itemApi.removeExtends(itemDto.id, -1, (newValue.second as ItemName).id)
+      }
+    }
+  }
+
+  override fun types() = listOf(TYPE)
 }

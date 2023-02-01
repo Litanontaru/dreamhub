@@ -74,6 +74,7 @@ object Lines {
       BOOLEAN -> BooleanLine(node)
       else -> throw UnsupportedOperationException("Unknown type ${node.types().first()}")
     }
+    is TypesTreeNode -> ListRefLine(node)
     is MetadataNode -> MetadataLine(node)
     is ItemNameNode -> ItemNameLine(node)
     is SettingMemberListTreeNode -> SettingMemberListLine(node)
@@ -455,6 +456,69 @@ class SettingMemberLine(private val item: ItemTreeNode) : EditableLine() {
       listOf(StringLineElement("${item.name()}: "), ComponentLineElement(editField, removeButton))
     } else {
       listOf(StringLineElement("${item.name()}: $initial", item.readOnly))
+    }
+  }
+}
+
+class ListRefLine(private val item: ItemTreeNode) : EditableLine() {
+  override fun getElements(editing: Boolean): List<LineElement> {
+    val name = item.name()?.let { "$it:" } ?: ""
+    val initial = item.getAsPrimitive() as List<ItemName>
+
+    return if (editing && !item.readOnly) {
+      val addButton = if (item.allowAdd()) {
+        Button(Icon(VaadinIcon.PLUS)) {
+          OptionSelection(
+            itemApi,
+            item.types(),
+            settingId
+          ) {
+            item.setAsPrimitive(it to null)
+            refreshItem(item, true)
+          }.open()
+        }
+      } else {
+        null
+      }
+      val createButton = if (item.allowNested()) {
+        if (item.types().size == 1) {
+          Button(Icon(VaadinIcon.MAGIC)) {
+            item.create(ItemName().apply { id = item.types()[0].id })
+            refreshItem(item, true)
+          }
+        } else {
+          MenuBar().apply {
+            val button = addItem(Icon(VaadinIcon.MAGIC))
+            item.types().forEach { type ->
+              button.subMenu.addItem(type.name) {
+                item.create(type)
+                refreshItem(item, true)
+              }
+            }
+          }
+        }
+      } else {
+        null
+      }
+      val buttons = listOf(addButton, createButton).mapNotNull { it }
+
+      val list = initial.flatMap { element ->
+        listOf(
+          StringLineElement(element.name),
+          ComponentLineElement(Button(Icon(VaadinIcon.CLOSE)) {
+            item.setAsPrimitive(null to element)
+            refreshItem(item, true)
+          })
+        )
+      }
+
+      if (buttons.isNotEmpty()) {
+        listOf(StringLineElement(name)) + list + listOf(ComponentLineElement(buttons))
+      } else {
+        listOf(StringLineElement(name)) + list
+      }
+    } else {
+      listOf(StringLineElement("$name ${initial.map { it.name }.joinToString(", ")}", item.readOnly))
     }
   }
 }
