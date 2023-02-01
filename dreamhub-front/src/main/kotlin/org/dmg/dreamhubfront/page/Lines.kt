@@ -74,9 +74,8 @@ object Lines {
       BOOLEAN -> BooleanLine(node)
       else -> throw UnsupportedOperationException("Unknown type ${node.types().first()}")
     }
-    is TypesTreeNode -> ListRefLine(node)
+    is ValuesTreeNode -> ListRefLine(node)
     is MetadataNode -> MetadataLine(node)
-    is ItemNameNode -> ItemNameLine(node)
     is SettingMemberListTreeNode -> SettingMemberListLine(node)
     is SettingMemberTreeNode -> SettingMemberLine(node)
     else -> RefLine(node)
@@ -247,20 +246,6 @@ class MetadataLine(private val item: MetadataNode) : EditableLine() {
       names[item.getAsPrimitive().typeId]
         ?.let { listOf(StringLineElement("${item.name()}: $it", item.readOnly)) }
         ?: listOf(StringLineElement("${item.name()}: ---", item.readOnly))
-    }
-  }
-}
-
-class ItemNameLine(private val item: ItemTreeNode) : EditableLine() {
-  override fun getElements(editing: Boolean): List<LineElement> {
-    return if (editing && !item.readOnly) {
-      val removeButton = Button(Icon(VaadinIcon.CLOSE)) {
-        item.parent!!.remove(item)
-        refreshItem(item.parent, true)
-      }
-      listOf(StringLineElement("${item.name()}"), ComponentLineElement(removeButton))
-    } else {
-      listOf(StringLineElement("${item.name()}", item.readOnly))
     }
   }
 }

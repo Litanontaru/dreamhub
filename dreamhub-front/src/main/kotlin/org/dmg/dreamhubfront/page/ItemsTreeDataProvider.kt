@@ -23,15 +23,20 @@ class ItemsTreeDataProvider(
   private val settingId: Long,
 ) : AbstractBackEndHierarchicalDataProvider<ItemListView, Any>() {
 
-  private lateinit var setting: SettingDto
+  private var setting: SettingDto = settingController.getSettingById(settingId)!!
   private val root = "".toFolder()
-  private var tree: MutableMap<ItemListView, MutableList<ItemListView>>
-  private var parents: Map<ItemListView, ItemListView>
-  private var index: Map<Long, ItemListView>
+  private lateinit var tree: MutableMap<ItemListView, MutableList<ItemListView>>
+  private lateinit var parents: Map<ItemListView, ItemListView>
+  private lateinit var index: Map<Long, ItemListView>
+
+  var filter: String? = null
 
   init {
-    setting = settingController.getSettingById(settingId)!!
-    tree = readTree()
+    loadTree()
+  }
+
+  private fun loadTree() {
+    tree = readTree(filter)
     tree[root]?.add(setting.toTerminal())
     parents = tree.entries.asSequence().flatMap { pair -> pair.value.asSequence().map { it to pair.key } }.associate { it }
     index = tree
@@ -43,8 +48,8 @@ class ItemsTreeDataProvider(
       .associateBy { it.item!!.id }
   }
 
-  private fun readTree(): MutableMap<ItemListView, MutableList<ItemListView>> =
-    itemApi.getAll(settingId, null, null)
+  private fun readTree(filter: String?): MutableMap<ItemListView, MutableList<ItemListView>> =
+    itemApi.getAll(settingId, filter, null)
       .flatMap {
         (listOf("") + it.path.split(".") + it).let { parts ->
           (1 until parts.size)
@@ -81,17 +86,17 @@ class ItemsTreeDataProvider(
     index[itemId]?.let { generateSequence(it) { parents[it] }.toList().reversed() } ?: listOf()
 
   override fun refreshAll() {
-    tree = readTree()
+    loadTree()
     super.refreshAll()
   }
 
   override fun refreshItem(item: ItemListView?, refreshChildren: Boolean) {
-    tree = readTree()
+    loadTree()
     super.refreshItem(item, refreshChildren)
   }
 
   override fun refreshItem(item: ItemListView?) {
-    tree = readTree()
+    loadTree()
     super.refreshItem(item)
   }
 

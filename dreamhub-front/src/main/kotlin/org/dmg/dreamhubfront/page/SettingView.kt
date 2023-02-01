@@ -2,11 +2,15 @@ package org.dmg.dreamhubfront.page
 
 import com.vaadin.flow.component.Component
 import com.vaadin.flow.component.UI
+import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.grid.GridVariant
 import com.vaadin.flow.component.html.Label
 import com.vaadin.flow.component.icon.Icon
 import com.vaadin.flow.component.icon.VaadinIcon
+import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
+import com.vaadin.flow.component.orderedlayout.VerticalLayout
+import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.component.treegrid.TreeGrid
 import com.vaadin.flow.function.SerializablePredicate
 import com.vaadin.flow.router.*
@@ -30,7 +34,6 @@ class SettingView(
   lateinit var view: ItemView
   lateinit var dataProvider: ItemsTreeDataProvider
   lateinit var tree: TreeGrid<ItemListView>
-
 
   init {
     width = "100%"
@@ -163,10 +166,33 @@ class SettingView(
         }
       }
 
-      tree.width = "30%"
-      tree.height = "100%"
+      val menu = HorizontalLayout().apply {
+        val search = TextField().apply {
+          width = "100%"
+        }
+        val searchButton = Button(Icon(VaadinIcon.SEARCH)) {
+          dataProvider.filter = search.value
+          dataProvider.refreshAll()
+        }
+        val back = Button(Icon(VaadinIcon.ARROW_BACKWARD)) {
+          this.ui.ifPresent { it.navigate(MainView::class.java) }
+        }
 
-      add(tree)
+        add(search, searchButton, back)
+        setVerticalComponentAlignment(FlexComponent.Alignment.END, back)
+        width = "100%"
+      }
+
+      val left = VerticalLayout().apply {
+        add(menu, tree)
+        tree.width = "100%"
+        tree.height = "100%"
+
+        width = "30%"
+        height = "100%"
+      }
+
+      add(left)
       add(view)
 
       this.settingId = settingId

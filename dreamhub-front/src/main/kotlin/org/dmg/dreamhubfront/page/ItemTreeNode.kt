@@ -152,8 +152,8 @@ class MainItemDtoTreeNode(
           IsTypeNode(itemDto, itemApi, this, false),
           DescriptionNode(itemDto, itemApi, this, false),
           GroupsNode(itemDto, itemApi, this, false),
-          TypesTreeNode(itemDto, itemApi, this, false),
-          AllowedExtensionsNode(itemDto, itemApi, this, false),
+          TypesNode(itemDto, itemApi, this, false),
+          AllowedExtensionListNode(itemDto, itemApi, this, false),
         )
       }
       if (itemDto.comboAllowedExtensions().isNotEmpty()) {
@@ -378,50 +378,6 @@ class ExtensionNode(
   override fun extends(): Sequence<ItemDto> = itemDto.extendsItems().toList().filter { !it.isType }.asSequence()
 
   override fun types(): List<ItemName> = itemDto.comboAllowedExtensions()
-}
-
-class AllowedExtensionsNode(
-  private val itemDto: ItemDto,
-  private val itemApi: ItemApi,
-  parent: ItemTreeNode,
-  readOnly: Boolean,
-) : ItemTreeNode(parent, readOnly) {
-  override fun name(): String = "Разрешены основы"
-
-  override fun hasChildren(): Boolean = itemDto.allowedExtensions.isNotEmpty()
-
-  override fun children(): List<ItemTreeNode> = itemDto.allowedExtensions.map { ItemNameNode(it, this, readOnly) }
-
-  override fun count(): Int = itemDto.allowedExtensions.size
-
-  override fun inAdd(value: ItemName) {
-    itemApi.addAllowedExtensions(itemDto.id, value.id)
-    itemDto.allowedExtensions.add(value)
-  }
-
-  override fun inRemove(node: ItemTreeNode) {
-    when (node) {
-      is ItemNameNode -> {
-        itemApi.removeAllowedExtensions(itemDto.id, node.id())
-        itemDto.allowedExtensions.removeIf { it.id == node.id() }
-      }
-    }
-  }
-
-  override fun types() = listOf(TYPE)
-
-  override fun isSingle(): Boolean = false
-}
-
-class ItemNameNode(private val itemName: ItemName, parent: ItemTreeNode, readOnly: Boolean) : ItemTreeNode(parent, readOnly) {
-  override fun name() = itemName.name
-  override fun id(): Long = itemName.id
-
-  override fun hasChildren(): Boolean = false
-
-  override fun children(): List<ItemTreeNode> = listOf()
-
-  override fun count(): Int = 0
 }
 
 class PrimitiveAttributeNode(
@@ -739,7 +695,7 @@ open class ValuesTreeNode(
   override fun count() = 0
 }
 
-class TypesTreeNode(
+class TypesNode(
   private val itemDto: ItemDto,
   private val itemApi: ItemApi,
   parent: ItemTreeNode,
@@ -753,6 +709,31 @@ class TypesTreeNode(
         itemApi.addExtends(itemDto.id, -1, (newValue.first as ItemName).id)
       } else if (newValue.second is ItemName) {
         itemApi.removeExtends(itemDto.id, -1, (newValue.second as ItemName).id)
+      }
+    }
+  }
+
+  override fun types() = listOf(TYPE)
+}
+
+class AllowedExtensionListNode(
+  private val itemDto: ItemDto,
+  private val itemApi: ItemApi,
+  parent: ItemTreeNode,
+  readOnly: Boolean,
+) : ValuesTreeNode("Разрешены основы", parent, readOnly) {
+  override fun getAsPrimitive() = itemDto.allowedExtensions
+
+  override fun setAsPrimitive(newValue: Any?) {
+    if (newValue is Pair<*, *>) {
+      val first = newValue.first
+      val second = newValue.second
+      if (first is ItemName) {
+        itemApi.addAllowedExtensions(itemDto.id, first.id)
+        itemDto.allowedExtensions.add(first)
+      } else if (second is ItemName) {
+        itemApi.removeAllowedExtensions(itemDto.id, second.id)
+        itemDto.allowedExtensions.removeIf { it.id == second.id }
       }
     }
   }
