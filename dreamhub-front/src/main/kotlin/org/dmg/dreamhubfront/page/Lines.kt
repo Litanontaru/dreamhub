@@ -502,13 +502,13 @@ class ListRefLine(private val item: ItemTreeNode) : EditableLine() {
       }
       val buttons = listOf(addButton, createButton).mapNotNull { it }
 
-      val list = initial.flatMap { element ->
-        listOf(
-          StringLineElement(element.name),
-          ComponentLineElement(Button(Icon(VaadinIcon.CLOSE)) {
+      val list = initial.map { element ->
+        ComponentLineElement(
+          nameButton(element.name, element.id, settingId, item.readOnly),
+          Button(Icon(VaadinIcon.CLOSE)) {
             item.setAsPrimitive(null to element)
             refreshItem(item, true)
-          })
+          }
         )
       }
 
@@ -518,7 +518,7 @@ class ListRefLine(private val item: ItemTreeNode) : EditableLine() {
         listOf(StringLineElement(name)) + list
       }
     } else {
-      listOf(StringLineElement("$name ${initial.map { it.name }.joinToString(", ")}", item.readOnly))
+      listOf(StringLineElement(name)) + listOf(ComponentLineElement(initial.map { nameButton(it.name, it.id, settingId, item.readOnly) }))
     }
   }
 }
