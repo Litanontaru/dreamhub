@@ -56,9 +56,14 @@ class ItemView(
           tree.addSelectionListener { updateSelection(it.firstSelectedItem.orElse(null)) }
 
           tree.addComponentHierarchyColumn { item ->
-            Lines.toComponent(item, item == selectedItem, itemApi, settingId) { node, refreshChildren ->
-              dataProvider.refreshItem(node, refreshChildren)
-            }
+            Lines.toComponent(
+              item,
+              item == selectedItem,
+              itemApi,
+              settingId,
+              { node, refreshChildren -> dataProvider.refreshItem(node, refreshChildren) },
+              { if (itemId > 0) setItem(itemId) }
+            )
           }.also {
             it.width = "100%"
             it.flexGrow = 1

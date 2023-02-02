@@ -31,6 +31,7 @@ object Lines {
     itemApi: ItemApi,
     settingId: Long,
     refreshItem: (ItemTreeNode, Boolean) -> Unit,
+    refreshAll: () -> Unit
   ): HorizontalLayout = item
     .compacted()
     .toList()
@@ -40,6 +41,7 @@ object Lines {
         it.itemApi = itemApi
         it.settingId = settingId
         it.refreshItem = refreshItem
+        it.refreshAll = refreshAll
       }
     }
     .flatMap { it.getElements(editing) }
@@ -123,6 +125,7 @@ open class EditableLine {
   var settingId: Long = -1
   lateinit var itemApi: ItemApi
   lateinit var refreshItem: (ItemTreeNode, Boolean) -> Unit
+  lateinit var refreshAll: () -> Unit
 
   open fun getElements(editing: Boolean): List<LineElement> = listOf()
 
@@ -460,6 +463,7 @@ class ListRefLine(private val item: ItemTreeNode) : EditableLine() {
           ) {
             item.setAsPrimitive(it to null)
             refreshItem(item, true)
+            refreshAll()
           }.open()
         }
       } else {
@@ -493,6 +497,7 @@ class ListRefLine(private val item: ItemTreeNode) : EditableLine() {
           Button(Icon(VaadinIcon.CLOSE)) {
             item.setAsPrimitive(null to element)
             refreshItem(item, true)
+            refreshAll()
           }
         )
       }
