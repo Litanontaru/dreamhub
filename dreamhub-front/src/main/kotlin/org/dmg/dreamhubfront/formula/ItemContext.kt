@@ -11,8 +11,16 @@ class ItemContext(private val item: AbstractItemDto) : ((String) -> List<Decimal
     value.startsWith("&") -> value
       .substring(1)
       .stripQuotation()
-      .let { key -> item.attributes.flatMap { it.comboValues() }.mapNotNull { it.item() }.partition { it.name.equals(key, ignoreCase = true) } }
-      .let { (match, notMatch) -> match.mapNotNull { it.rate() } + notMatch.flatMap { it.getContext()(value) } }
+      .let { key ->
+        item
+          .attributes
+          .flatMap { it.comboValues() }
+          .mapNotNull { it.item() }
+          .partition { it.name.equals(key, ignoreCase = true) || it.extendsItems().any { it.name.equals(key, ignoreCase = true) } }
+      }
+      .let { (match, notMatch) ->
+        match.mapNotNull { it.rate() } + notMatch.flatMap { it.getContext()(value) }
+      }
       .filter { it !is NanDecimal }
     else -> value
       .stripQuotation()
