@@ -31,7 +31,7 @@ object Lines {
     itemApi: ItemApi,
     settingId: Long,
     refreshItem: (ItemTreeNode, Boolean) -> Unit,
-    refreshAll: () -> Unit
+    refreshAll: () -> Unit,
   ): HorizontalLayout = item
     .compacted()
     .toList()
@@ -76,6 +76,7 @@ object Lines {
       BOOLEAN -> BooleanLine(node)
       else -> throw UnsupportedOperationException("Unknown type ${node.types().first()}")
     }
+
     is ValuesTreeNode -> ListRefLine(node)
     is MetadataNode -> MetadataLine(node)
     is SettingMemberListTreeNode -> SettingMemberListLine(node)
@@ -247,7 +248,7 @@ class MetadataLine(private val item: MetadataNode) : EditableLine() {
       listOf(StringLineElement(item.name()), ComponentLineElement(editType, isSingle, allowCreate, allowReference, isRequired, removeButton))
     } else {
       names[item.getAsPrimitive().typeId]
-        ?.let { listOf(StringLineElement("${item.name()}: $it", item.readOnly)) }
+        ?.let { listOf(StringLineElement(item.name()), ComponentLineElement(nameButton(it, item.getAsPrimitive().typeId, settingId, item.readOnly))) }
         ?: listOf(StringLineElement("${item.name()}: ---", item.readOnly))
     }
   }
