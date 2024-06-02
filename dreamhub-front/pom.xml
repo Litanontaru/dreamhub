@@ -12,7 +12,7 @@
     <artifactId>dreamhub-front</artifactId>
 
     <properties>
-        <vaadin.version>23.0.8</vaadin.version>
+        <vaadin.version>23.5.0</vaadin.version>
     </properties>
 
     <dependencyManagement>
