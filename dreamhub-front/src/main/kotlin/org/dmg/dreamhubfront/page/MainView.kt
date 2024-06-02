@@ -10,6 +10,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.server.VaadinServletRequest
 import org.dmg.dreamhubfront.SettingController
+import org.dmg.dreamhubfront.feign.ItemApi
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler
 import javax.annotation.security.PermitAll
 
@@ -18,7 +19,8 @@ import javax.annotation.security.PermitAll
 @PermitAll
 class MainView(
   userSession: UserSession,
-  settingController: SettingController
+  settingController: SettingController,
+  private val itemApi: ItemApi
 ) : VerticalLayout() {
   init {
     val div = Div()
@@ -43,6 +45,9 @@ class MainView(
       SettingEditDialog(null) {
         settingController.addSetting(it)
       }.open()
+    })
+    add(Button("Реиндексация") {
+      itemApi.reindexAll()
     })
   }
 

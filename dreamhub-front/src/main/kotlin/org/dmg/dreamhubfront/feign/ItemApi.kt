@@ -9,6 +9,10 @@ class ItemApi(
   private val itemController: ItemController,
   private val settingController: SettingController,
 ) {
+  fun reindexAll() {
+    itemController.reindexAll();
+  }
+
   fun getAll(settingId: Long, filter: String?, findUsages: Long?): List<ItemListDto> {
     return itemController.getAll(settingId, filter, findUsages)
   }
