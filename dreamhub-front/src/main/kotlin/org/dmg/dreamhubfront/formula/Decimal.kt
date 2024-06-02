@@ -92,12 +92,7 @@ fun Int.toDecimal(): Decimal = this.toBigDecimal().toDecimal()
 
 fun Iterable<Decimal>.sum() = fold<Decimal, Decimal>(NONE) { a, b -> a + b }
 
-fun Iterable<Decimal>.sumto() = fold<Decimal, Decimal>(NONE) { a, b ->
-  when (a) {
-    is NoneDecimal -> b
-    else -> a / TWO + b
-  }
-}
+fun Iterable<Decimal>.sumto() = (first() + sum()) / TWO
 
 fun Iterable<Decimal>.prod() = fold(ONE, { a, b -> a * b })
 
