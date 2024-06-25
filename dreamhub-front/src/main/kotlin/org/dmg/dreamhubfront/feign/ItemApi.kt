@@ -3,6 +3,7 @@ package org.dmg.dreamhubfront.feign
 import org.dmg.dreamhubfront.*
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
+import java.lang.RuntimeException
 
 @Service
 class ItemApi(
@@ -33,7 +34,11 @@ class ItemApi(
   }
 
   operator fun get(id: Long): ItemDto {
-    return itemController.get(id)
+    try {
+      return itemController.get(id)
+    } catch (e: Exception) {
+      throw RuntimeException("Cannot get item $id", e)
+    }
   }
 
   fun add(newItem: ItemDto): ItemDto {
