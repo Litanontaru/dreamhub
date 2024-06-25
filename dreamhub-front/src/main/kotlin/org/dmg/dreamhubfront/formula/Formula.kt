@@ -6,6 +6,7 @@ interface FNode {
   fun close(): FNode = this
 
   operator fun unaryMinus(): FNode = FNegate(this)
+  fun abs(): FNode = FAbs(this)
   operator fun plus(right: FNode): FNode = FSum(listOf(this, right))
   operator fun minus(right: FNode): FNode = this + (-right)
   operator fun times(right: FNode): FNode = FTimes(listOf(this, right))
@@ -40,6 +41,10 @@ class FVar(private val value: () -> List<Decimal>) : FAbstractNodeList {
 
 class FNegate(private val value: FNode) : FNode {
   override fun calculate() = -value.calculate()
+}
+
+class FAbs(private val value: FNode) :FNode {
+  override fun calculate() = value.calculate().abs()
 }
 
 open class FClosedSum(private val values: List<FNode>) : FNode {
@@ -163,6 +168,7 @@ object Formula {
           "COUNT" -> result = action(result, parse(1).count())
           "PROD" -> result = action(result, parse(1).prod())
           "SUMTO" -> result = action(result, parse(1).sumto())
+          "ABS" -> result = action(result, parse(1).abs())
           "(" -> result = action(result, parse())
           else -> result = action(result, FVar { context(part) })
         }

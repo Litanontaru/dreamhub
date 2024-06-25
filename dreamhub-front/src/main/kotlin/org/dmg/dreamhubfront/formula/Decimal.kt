@@ -9,6 +9,8 @@ import java.math.RoundingMode
 open class Decimal(val value: BigDecimal, val type: String) : Comparable<Decimal> {
   open operator fun unaryMinus(): Decimal = Decimal(-value, type)
 
+  fun abs(): Decimal = Decimal(value.abs(), type)
+
   open operator fun plus(right: Decimal) = when (right) {
     is NanDecimal -> NanDecimal
     is NoneDecimal -> Decimal(value, combineTypes(right))
