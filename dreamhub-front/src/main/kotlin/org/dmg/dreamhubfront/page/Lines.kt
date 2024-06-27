@@ -205,7 +205,7 @@ class MetadataLine(private val item: MetadataNode) : EditableLine() {
         setItems(names.keys.toList())
         setItemLabelGenerator { names[it] }
 
-        value = item.getAsPrimitive().typeId
+        value = names[item.getAsPrimitive().typeId]?.let { item.getAsPrimitive().typeId } ?: -1
         width = "25em"
 
         addValueChangeListener {
@@ -247,8 +247,9 @@ class MetadataLine(private val item: MetadataNode) : EditableLine() {
 
       listOf(StringLineElement(item.name()), ComponentLineElement(editType, isSingle, allowCreate, allowReference, isRequired, removeButton))
     } else {
-      names[item.getAsPrimitive().typeId]
-        ?.let { listOf(StringLineElement(item.name()), ComponentLineElement(nameButton(it, item.getAsPrimitive().typeId, settingId, item.readOnly))) }
+      val id = names[item.getAsPrimitive().typeId]?.let { item.getAsPrimitive().typeId } ?: -1L
+      names[id]
+        ?.let { listOf(StringLineElement(item.name()), ComponentLineElement(nameButton(it, id, settingId, item.readOnly))) }
         ?: listOf(StringLineElement("${item.name()}: ---", item.readOnly))
     }
   }
@@ -307,7 +308,7 @@ class MainItemDtoLine(private val item: ItemTreeNode) : EditableLine() {
         }
       }
       val addButton = Button(Icon(VaadinIcon.PLUS)) {
-        EditDialog("Новый атрибут", "") { attributeName ->
+        EditDialog("Новый атрибут", "", true) { attributeName ->
           item.add(ItemName().also { it.name = attributeName })
           refreshItem(item, true)
         }.open()
