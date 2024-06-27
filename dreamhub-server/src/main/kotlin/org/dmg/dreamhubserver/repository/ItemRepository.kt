@@ -18,7 +18,7 @@ interface ItemRepository : CrudRepository<Item, Long> {
   fun getAllTypes(settingIds: List<Long>): List<ItemListWithExtends>
 
   @Query("SELECT i.definition FROM Item i Where i.id = :id")
-  fun getDefinitionById(id: Long): String
+  fun getDefinitionById(id: Long): String?
 
   @Query("SELECT i.name FROM Item i Where i.id = :id")
   fun getNameById(id: Long): String

@@ -20,6 +20,10 @@ class ItemService(
   private val settingService: SettingService,
   private val itemIndexService: ItemIndexService,
 ) {
+  private var dummy = ItemDto().apply {
+    name = "DUMMY"
+  }
+
   fun reindexAll() = itemIndexService.reindexAll()
 
   fun getAll(settingId: Long): List<ItemListDto> = itemRepository.getAll(settingId).map { it.toDto() }
@@ -51,7 +55,7 @@ class ItemService(
   private fun getAllTypeList(settingId: Long) =
     (settingService.getDependencies(settingId) + settingId).let { itemRepository.getAllTypes(it) }
 
-  fun get(id: Long): ItemDto = itemRepository.getDefinitionById(id).toDto().prepare()
+  fun get(id: Long): ItemDto = itemRepository.getDefinitionById(id)?.toDto()?.prepare() ?: dummy;
 
   private fun ItemDto.prepare(): ItemDto {
     getRefItems()
@@ -76,7 +80,7 @@ class ItemService(
   private fun AbstractItemDto.refreshExtendsOnly(): AbstractItemDto {
     extends
       .forEach() {
-        it.item = itemRepository.getDefinitionById(it.id).toDto()
+        it.item = itemRepository.getDefinitionById(it.id)?.toDto() ?: dummy
         it.item?.refreshExtendsOnly()
       }
     return this
@@ -109,9 +113,12 @@ class ItemService(
   }
 
   fun copy(id: Long): ItemDto {
-    return add(itemRepository.getDefinitionById(id).toDto().also {
-      it.name = it.name + " Копия"
-    })
+    return itemRepository
+      .getDefinitionById(id)
+      ?.toDto()
+      .let { it ?: dummy }
+      .also { it.name = it.name +  " Копия"}
+      .also { add(it) }
   }
 
   private fun Item.modify(action: (ItemDto) -> Unit) {
