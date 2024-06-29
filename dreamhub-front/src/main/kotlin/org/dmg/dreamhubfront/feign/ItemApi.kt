@@ -120,7 +120,7 @@ class ItemApi(
   }
 
   fun addAttributePrimitiveValue(id: Long, nestedId: Long = -1, attributeName: String, newValue: String): ValueDto {
-    return itemController.addAttributePrimitiveValue(id, nestedId, attributeName.emptySubstitute(), newValue)
+    return itemController.addAttributePrimitiveValue(id, nestedId, attributeName.emptySubstitute(), newValue.emptySubstitute())
   }
 
   fun addAttributeTerminalValue(id: Long, nestedId: Long = -1, attributeName: String, newValue: Long): ValueDto {
@@ -136,7 +136,7 @@ class ItemApi(
   }
 
   fun modifyAttributePrimitiveValue(id: Long, nestedId: Long = -1, attributeName: String, valueIndex: Int, newValue: String): ValueDto {
-    return itemController.modifyAttributePrimitiveValue(id, nestedId, attributeName.emptySubstitute(), valueIndex, newValue)
+    return itemController.modifyAttributePrimitiveValue(id, nestedId, attributeName.emptySubstitute(), valueIndex, newValue.emptySubstitute())
   }
 
   fun moveAttributeUp(id: Long, nestedId: Long, attributeName: String, valueIndex: Int) {
