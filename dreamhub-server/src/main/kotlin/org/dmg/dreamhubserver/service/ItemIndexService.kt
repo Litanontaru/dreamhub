@@ -16,8 +16,10 @@ class ItemIndexService(
   @Async
   @Transactional
   fun reindexAll() {
+    println("REINDEX IS REQUESTED")
     itemIndexRepository.deleteAll();
     itemRepository.findAll().forEach { reindexRecursive(it) }
+    println("REINDEX IS DONE")
   }
 
   @Async

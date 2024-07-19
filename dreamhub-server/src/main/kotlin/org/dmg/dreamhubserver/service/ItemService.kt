@@ -31,7 +31,7 @@ class ItemService(
   fun getAll(settingId: Long, filter: String): List<ItemListDto> =
     itemRepository.getAll(settingId, "%$filter%").map { it.toDto() }
 
-  fun getAll(settingId: Long, findUsages: Long): List<ItemListDto> = TODO("Not yet implemented")
+  fun findUsages(settingId: Long, findUsages: Long): List<ItemListDto> = TODO("Not yet implemented")
 
   fun getAllRecursiveSetting(settingId: Long, superTypeIds: List<Long>): List<ItemListDto> =
     (settingService.getDependencies(settingId) + settingId)

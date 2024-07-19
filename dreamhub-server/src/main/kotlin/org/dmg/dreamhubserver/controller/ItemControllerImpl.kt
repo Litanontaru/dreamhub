@@ -14,7 +14,7 @@ class ItemControllerImpl(
 
   override fun getAll(settingId: Long, filter: String?, findUsages: Long?): List<ItemListDto> =
     filter?.let { service.getAll(settingId, it) }
-      ?: findUsages?.let { service.getAll(settingId, it) }
+      ?: findUsages?.let { service.findUsages(settingId, it) }
       ?: service.getAll(settingId)
 
   override fun getSubItems(settingId: Long, superTypeIds: List<Long>) = service.getAllRecursiveSetting(settingId, superTypeIds)
