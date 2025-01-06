@@ -109,7 +109,7 @@ interface FAbstractNodeList : FNode {
 
   override fun prod(): FNode = FCalculator { values().map { it.calculate() }.prod() }
 
-  override fun sumto(): FNode = FCalculator { values().map { it.calculate() }.sorted().sumto() }
+  override fun sumto(): FNode = FCalculator { values().map { it.calculate() }.sorted().reversed().sumto() }
 }
 
 class FNodeList(val values: List<FNode>) : FAbstractNodeList {
