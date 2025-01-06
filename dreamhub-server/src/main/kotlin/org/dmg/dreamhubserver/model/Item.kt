@@ -1,8 +1,10 @@
 package org.dmg.dreamhubserver.model
 
 import org.hibernate.annotations.Type
-import javax.persistence.Column
-import javax.persistence.Entity
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import org.hibernate.annotations.JdbcTypeCode
+import java.sql.Types
 
 @Entity
 class Item: DBObject() {
@@ -14,12 +16,12 @@ class Item: DBObject() {
 
   var settingId: Long = 0
 
-  @Type(type = "text")
+  @JdbcTypeCode(Types.LONGVARCHAR)
   var extends: String = ""
 
   var isType: Boolean = false
 
-  @Type(type = "text")
+  @JdbcTypeCode(Types.LONGVARCHAR)
   var definition: String = ""
 
   @Column(name = "rnk")

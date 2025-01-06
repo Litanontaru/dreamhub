@@ -12,7 +12,7 @@ import com.vaadin.flow.server.VaadinServletRequest
 import org.dmg.dreamhubfront.SettingController
 import org.dmg.dreamhubfront.feign.ItemApi
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler
-import javax.annotation.security.PermitAll
+import jakarta.annotation.security.PermitAll
 
 
 @Route("")

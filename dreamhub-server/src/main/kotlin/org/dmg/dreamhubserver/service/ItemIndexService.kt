@@ -51,11 +51,12 @@ class ItemIndexService(
         itemIndexRepository
           .findAllByRefAndSettingId(it, settingId)
           ?.also { it.ids = it.ids + "$id," }
-          ?: ItemIndex(it, settingId)
+          ?: ItemIndex().apply { ref = it }
             .also {
+              it.settingId = settingId
               it.ids = ",$id,"
-              itemIndexRepository.save(it)
             }
+            .also(itemIndexRepository::save)
       }
 
     old.filter { !newId.contains(it.id) }

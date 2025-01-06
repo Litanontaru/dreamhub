@@ -1,7 +1,7 @@
 package org.dmg.dreamhubserver.model
 
 import org.dmg.dreamhubfront.UserRoleType
-import javax.persistence.Entity
+import jakarta.persistence.Entity
 
 @Entity
 class UserRole: DBObject() {

@@ -18,7 +18,7 @@ import org.dmg.dreamhubfront.ItemDto
 import org.dmg.dreamhubfront.ItemListDto
 import org.dmg.dreamhubfront.SettingController
 import org.dmg.dreamhubfront.feign.ItemApi
-import javax.annotation.security.PermitAll
+import jakarta.annotation.security.PermitAll
 
 @Route("settings/:settingId/:itemId")
 @PermitAll
