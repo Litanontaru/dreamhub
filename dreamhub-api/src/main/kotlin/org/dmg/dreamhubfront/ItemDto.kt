@@ -1,5 +1,7 @@
 package org.dmg.dreamhubfront
 
+import java.math.BigDecimal
+
 open class ItemName {
   var id: Long = 0
   var name: String = ""
@@ -153,7 +155,11 @@ class AttributeDto {
     } else {
       val left = comboValues()[0]
       when {
-        left.primitive != null -> {} //do nothing
+        left.primitive != null -> {
+          if (right.primitive != null) {
+            left.primitive = sum(left.primitive, right.primitive)
+          }
+        } //do nothing
         right.primitive != null -> inherited = mutableListOf(right)
         else -> !left.item()!! += !right.item()!!
       }
@@ -166,6 +172,22 @@ class AttributeDto {
       ?: run { inherited = values.toMutableList() }
   }
 }
+
+fun sum(a: String?, b: String?) : String? = sumNumbers(a, b) ?: a
+
+fun sumNumbers(a: String?, b: String?): String? = when {
+  a.isModifier() && b.isModifier() -> a?.toNumberOrNull()?.let { l -> b?.toNumberOrNull()?.let { it + l } }?.toString()?.let { "($it)" }
+  a.isModifier() || b.isModifier() -> a?.toNumberOrNull()?.let { l -> b?.toNumberOrNull()?.let { it + l } }?.toString()
+  else -> null
+}
+
+fun String?.isModifier() =
+  this?.takeIf { startsWith("(") && endsWith(")") }?.substring(1, length - 1)?.toBigDecimalOrNull() != null
+
+fun String.toNumberOrNull(): BigDecimal? = when {
+  startsWith("(") && endsWith(")") -> substring(1, length - 1)
+  else -> this
+}.toBigDecimalOrNull()
 
 class ValueDto {
   var nested: AbstractItemDto? = null

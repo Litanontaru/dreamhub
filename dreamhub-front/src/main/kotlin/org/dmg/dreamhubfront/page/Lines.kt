@@ -23,6 +23,7 @@ import org.dmg.dreamhubfront.StandardTypes.POSITIVE
 import org.dmg.dreamhubfront.StandardTypes.STRING
 import org.dmg.dreamhubfront.feign.ItemApi
 import org.dmg.dreamhubfront.formula.toDecimalOrNull
+import org.dmg.dreamhubfront.page.Lines.checkPositive
 
 object Lines {
   fun toComponent(
@@ -70,9 +71,9 @@ object Lines {
     is ItemDtoTreeNode -> ItemDtoLine(node)
     is ValueNode -> when (node.types().first()) {
       STRING -> StringLine(node, "35em")
-      POSITIVE -> StringLine(node, "6em") { it.toIntOrNull()?.takeIf { it >= 0L }?.toString() ?: "" }
-      INT -> StringLine(node, "6em") { it.toIntOrNull()?.toString() ?: "" }
-      DECIMAL -> StringLine(node, "6em") { it.toDecimalOrNull()?.toString() ?: "" }
+      POSITIVE -> StringLine(node, "6em") { it.checkPositive() }
+      INT -> StringLine(node, "6em") { it.checkInt() }
+      DECIMAL -> StringLine(node, "6em") { it.checkDecimal() }
       BOOLEAN -> BooleanLine(node)
       else -> throw UnsupportedOperationException("Unknown type ${node.types().first()}")
     }
@@ -83,6 +84,17 @@ object Lines {
     is SettingMemberTreeNode -> SettingMemberLine(node)
     else -> RefLine(node)
   }
+
+  private fun String.modifier() = when {
+    startsWith("(") && endsWith(")") -> substring(1, length - 1)
+    else -> this
+  }
+
+  private fun String.checkPositive() = modifier().toIntOrNull()?.takeIf { it >= 0L }.let { this } ?: ""
+
+  private fun String.checkInt() = modifier().toIntOrNull()?.let { this } ?: ""
+
+  private fun String.checkDecimal() = modifier().toDecimalOrNull()?.let { this } ?: ""
 }
 
 interface LineElement {
